@@ -24,11 +24,37 @@ def _skip_string(text: str, pos: int) -> int:
     raise TorznabBlockError("Chaîne de caractères non terminée dans config.js.")
 
 
+def _skip_line_comment(text: str, pos: int) -> int:
+    """Skip from // to end of line."""
+    i = pos + 2  # Skip the //
+    while i < len(text) and text[i] not in "\n\r":
+        i += 1
+    return i
+
+
+def _skip_block_comment(text: str, pos: int) -> int:
+    """Skip from /* to matching */."""
+    i = pos + 2  # Skip the /*
+    while i < len(text) - 1:
+        if text[i:i+2] == "*/":
+            return i + 2
+        i += 1
+    raise TorznabBlockError("Commentaire non terminé (/* sans */) dans config.js.")
+
+
 def _find_matching(text: str, open_pos: int, open_ch: str, close_ch: str) -> int:
     depth = 0
     i = open_pos
     while i < len(text):
         ch = text[i]
+        # Check for comments first
+        if i < len(text) - 1 and text[i:i+2] == "//":
+            i = _skip_line_comment(text, i)
+            continue
+        if i < len(text) - 1 and text[i:i+2] == "/*":
+            i = _skip_block_comment(text, i)
+            continue
+        # Check for strings
         if ch in _QUOTE_CHARS:
             i = _skip_string(text, i)
             continue
@@ -84,7 +110,7 @@ def read_config(path: Path) -> str:
 def backup_config(path: Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
     backup_path = path.with_name(f"{path.name}.bak.{timestamp}")
-    backup_path.write_text(path.read_text())
+    backup_path.write_bytes(path.read_bytes())
     return backup_path
 
 

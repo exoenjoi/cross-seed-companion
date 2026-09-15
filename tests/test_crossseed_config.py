@@ -28,6 +28,15 @@ MAP_STYLE_CONFIG = """module.exports = {
 };
 """
 
+FLAT_ARRAY_WITH_COMMENT = """module.exports = {
+  torznab: [
+    "http://prowlarr:9696/1/api?apikey=old", // see docs ] for format
+    "http://prowlarr:9696/2/api?apikey=old"
+  ],
+  delay: 30,
+};
+"""
+
 
 def test_find_torznab_block_locates_flat_array():
     start, end = find_torznab_block(FLAT_ARRAY_CONFIG)
@@ -102,3 +111,29 @@ def test_read_and_write_config_roundtrip(tmp_path):
     write_config(config_path, text.replace("old", "new"))
 
     assert "new" in config_path.read_text()
+
+
+def test_replace_torznab_block_handles_inline_comments():
+    """Test that inline // comments inside torznab array are correctly skipped."""
+    result = replace_torznab_block(
+        FLAT_ARRAY_WITH_COMMENT,
+        ["http://prowlarr:9696/1/api?apikey=new"],
+    )
+
+    assert '"http://prowlarr:9696/1/api?apikey=new"' in result
+    assert "old" not in result
+    assert "delay: 30" in result  # rest of file preserved
+    # Ensure the comment didn't corrupt parsing
+    assert result.count("[") == result.count("]")
+
+
+def test_backup_config_preserves_line_endings(tmp_path):
+    """Test that backup preserves exact byte content, including \\r\\n line endings."""
+    config_path = tmp_path / "config.js"
+    original_bytes = FLAT_ARRAY_CONFIG.replace("\n", "\r\n").encode("utf-8")
+    config_path.write_bytes(original_bytes)
+
+    backup_path = backup_config(config_path)
+
+    assert backup_path.exists()
+    assert backup_path.read_bytes() == original_bytes
