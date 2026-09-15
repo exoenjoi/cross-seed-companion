@@ -133,3 +133,25 @@ def test_log_tailer_handles_missing_symlink_at_startup(tmp_path):
     # Now should get just the new entry
     entries = tailer.read_new_entries()
     assert [e.message for e in entries] == ["new entry"]
+
+
+def test_log_tailer_close_releases_file_handle(tmp_path):
+    """Test that close() releases the underlying file handle."""
+    current, target = _make_current_log(
+        tmp_path, "verbose.2026-09-15.log", "2026-09-15 00:00:00.000 info: [x] entry\n"
+    )
+    tailer = LogTailer(current)
+    tailer.read_new_entries()  # Opens the file
+
+    # File should be open before close
+    assert tailer._file is not None
+
+    # Close should release the file handle
+    tailer.close()
+
+    # File should be None after close
+    assert tailer._file is None
+
+    # Closing again should not raise an error
+    tailer.close()
+    assert tailer._file is None
