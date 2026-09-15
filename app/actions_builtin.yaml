@@ -1,0 +1,50 @@
+- id: search
+  title: "Lancer une recherche"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  body:
+    name: search
+  confirm: "Lancer une recherche cross-seed sur les torrents éligibles ?"
+
+- id: search-full
+  title: "Recherche complète (ignore les exclusions)"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  body:
+    name: search
+    ignoreExcludeRecentSearch: true
+    ignoreExcludeOlder: true
+  confirm: "Lancer une recherche complète en ignorant les exclusions habituelles ? Peut être plus lourd pour les indexers."
+
+- id: notify
+  title: "Notifier un infoHash"
+  method: POST
+  url: "${CROSSSEED_URL}/api/webhook?apikey=${CROSSSEED_API_KEY}"
+  body:
+    infoHash: "${INPUT}"
+  input_label: "InfoHash du torrent"
+  confirm: "Notifier cross-seed pour cet infoHash ?"
+
+- id: cleanup
+  title: "Cleanup"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  body:
+    name: cleanup
+  confirm: "Lancer le job de nettoyage cross-seed ?"
+
+- id: rss
+  title: "RSS"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  body:
+    name: rss
+  confirm: "Lancer un scan RSS cross-seed ?"
+
+- id: update-indexer-caps
+  title: "Mettre à jour les capacités indexers"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  body:
+    name: updateIndexerCaps
+  confirm: "Rafraîchir les capacités des indexers auprès de cross-seed ?"
