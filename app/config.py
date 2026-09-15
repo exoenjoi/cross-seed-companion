@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     sync_interval_minutes: int | None = None
     docker_manager_url: str | None = None
     actions_config_path: Path | None = None
+    crossseed_logs_path: Path | None = None
 
 
 @lru_cache
