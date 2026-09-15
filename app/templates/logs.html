@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-tag">03 · Logs</span>
+<h1 class="page-title">Logs cross-seed (temps réel)</h1>
+
+<input type="text" id="log-filter" class="log-filter" placeholder="Filtrer...">
+
+<div id="log-container" class="log-container">
+  {% for entry in entries %}
+    {% include "_log_line.html" %}
+  {% endfor %}
+</div>
+
+<script>
+  (function () {
+    var container = document.getElementById("log-container");
+    var filterInput = document.getElementById("log-filter");
+
+    function applyFilter() {
+      var needle = filterInput.value.toLowerCase();
+      container.querySelectorAll(".log-line").forEach(function (line) {
+        line.hidden = needle !== "" && !line.textContent.toLowerCase().includes(needle);
+      });
+    }
+    filterInput.addEventListener("input", applyFilter);
+
+    function isScrolledToBottom() {
+      return container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
+    }
+
+    container.scrollTop = container.scrollHeight;
+
+    var source = new EventSource("/logs/stream");
+    source.onmessage = function (event) {
+      var stickToBottom = isScrolledToBottom();
+      container.insertAdjacentHTML("beforeend", event.data);
+      applyFilter();
+      if (stickToBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    };
+  })();
+</script>
+{% endblock %}
