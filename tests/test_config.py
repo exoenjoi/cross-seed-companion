@@ -33,6 +33,7 @@ def test_settings_optional_fields_default_to_none_or_false(monkeypatch):
     assert settings.sync_exclude_tag is None
     assert settings.sync_interval_minutes is None
     assert settings.docker_manager_url is None
+    assert settings.actions_config_path is None
 
 
 def test_settings_parses_optional_fields_from_env(monkeypatch):
@@ -49,3 +50,13 @@ def test_settings_parses_optional_fields_from_env(monkeypatch):
     assert settings.sync_exclude_tag == "no-cross-seed"
     assert settings.sync_interval_minutes == 60
     assert settings.docker_manager_url == "https://portainer.example.com"
+
+
+def test_settings_parses_actions_config_path(monkeypatch):
+    for key, value in REQUIRED_ENV.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setenv("ACTIONS_CONFIG_PATH", "/config/custom-actions.yml")
+
+    settings = Settings(_env_file=None)
+
+    assert str(settings.actions_config_path) == "/config/custom-actions.yml"

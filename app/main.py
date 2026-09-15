@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.prowlarr import ProwlarrClient
+from app.routers import actions as actions_router
 from app.routers import sync as sync_router
 
 
@@ -25,6 +26,7 @@ app.mount(
     name="static",
 )
 app.include_router(sync_router.router)
+app.include_router(actions_router.router)
 
 
 @app.get("/healthz")
