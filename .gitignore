@@ -4,3 +4,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+
+# skill/tool-generated files (not part of the shipped project)
+.impeccable/
+.superpowers/
+PRODUCT.md
+docs/superpowers/
