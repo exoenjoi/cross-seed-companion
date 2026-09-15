@@ -66,3 +66,70 @@ def test_log_tailer_detects_symlink_rotation_and_flushes_pending_entry(tmp_path)
     # la rotation doit "libérer" l'entrée en attente de day1, même si day2 a déjà
     # sa propre entrée qui reste elle-même en attente (pas encore refermée)
     assert [e.message for e in entries] == ["last entry of day1"]
+
+
+def test_log_tailer_handles_rotation_race_when_new_file_not_yet_created(tmp_path):
+    """Test that tailer doesn't get permanently stuck if symlink target doesn't exist yet.
+
+    Scenario: cross-seed rotates the symlink before finishing the new file.
+    Tailer should retry on next call, not cache a "seen" state for a missing file.
+    """
+    current, day1 = _make_current_log(
+        tmp_path, "verbose.2026-09-14.log", "2026-09-14 23:59:00.000 info: [x] day1 entry\n"
+    )
+    tailer = LogTailer(current)
+    tailer.read_new_entries()
+
+    # Append pending entry on day1
+    with day1.open("a") as f:
+        f.write("2026-09-14 23:59:30.000 info: [x] pending entry\n")
+    assert tailer.read_new_entries() == []
+
+    # Rotate symlink to day2, but day2 doesn't exist yet (race condition)
+    day2_path = tmp_path / "verbose.2026-09-15.log"
+    current.unlink()
+    current.symlink_to(day2_path)
+
+    # First call with missing target: should flush pending from day1 but can't read new file
+    entries = tailer.read_new_entries()
+    assert [e.message for e in entries] == ["pending entry"]
+
+    # Now day2 file appears
+    day2_path.write_text("2026-09-15 00:00:00.000 info: [x] first entry of day2\n")
+
+    # Next call should successfully read from day2 (not be permanently stuck)
+    entries = tailer.read_new_entries()
+    assert [e.message for e in entries] == []  # day2's first entry is pending, not closed
+
+
+def test_log_tailer_handles_missing_symlink_at_startup(tmp_path):
+    """Test that symlink missing at startup doesn't consume first-open EOF-seek.
+
+    Scenario: app starts before cross-seed creates today's file.
+    When file appears, tailer should seek to EOF (backfill separate), not read from byte 0.
+    """
+    current = tmp_path / "verbose.current.log"
+
+    # LogTailer created with non-existent symlink
+    tailer = LogTailer(current)
+
+    # First call with missing symlink: should return []
+    assert tailer.read_new_entries() == []
+
+    # Now create the file with existing content (simulating backfill already shown to user)
+    day1 = tmp_path / "verbose.2026-09-15.log"
+    day1.write_text("2026-09-15 00:00:00.000 info: [x] old entry already shown by backfill\n")
+    current.symlink_to(day1)
+
+    # Next call should seek to EOF (not re-show old content)
+    entries = tailer.read_new_entries()
+    assert entries == []  # EOF seek means no content returned
+
+    # Append new content
+    with day1.open("a") as f:
+        f.write("2026-09-15 00:00:01.000 info: [x] new entry\n")
+        f.write("2026-09-15 00:00:02.000 info: [x] closes previous\n")
+
+    # Now should get just the new entry
+    entries = tailer.read_new_entries()
+    assert [e.message for e in entries] == ["new entry"]
