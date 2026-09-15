@@ -37,6 +37,24 @@ FLAT_ARRAY_WITH_COMMENT = """module.exports = {
 };
 """
 
+FLAT_ARRAY_WITH_BLOCK_COMMENT = """module.exports = {
+  torznab: [
+    "http://prowlarr:9696/1/api?apikey=old", /* see docs ] and ) for format */
+    "http://prowlarr:9696/2/api?apikey=old"
+  ],
+  delay: 30,
+};
+"""
+
+FLAT_ARRAY_WITH_UNTERMINATED_BLOCK_COMMENT = """module.exports = {
+  torznab: [
+    "http://prowlarr:9696/1/api?apikey=old", /* unterminated
+    "http://prowlarr:9696/2/api?apikey=old"
+  ],
+  delay: 30,
+};
+"""
+
 
 def test_find_torznab_block_locates_flat_array():
     start, end = find_torznab_block(FLAT_ARRAY_CONFIG)
@@ -137,3 +155,39 @@ def test_backup_config_preserves_line_endings(tmp_path):
 
     assert backup_path.exists()
     assert backup_path.read_bytes() == original_bytes
+
+
+def test_read_and_write_config_preserve_crlf_line_endings(tmp_path):
+    """read_config/write_config must not silently normalize CRLF to LF."""
+    config_path = tmp_path / "config.js"
+    original_bytes = FLAT_ARRAY_CONFIG.replace("\n", "\r\n").encode("utf-8")
+    config_path.write_bytes(original_bytes)
+
+    text = read_config(config_path)
+    write_config(config_path, text)
+
+    assert config_path.read_bytes() == original_bytes
+
+
+def test_replace_torznab_block_handles_inline_block_comments():
+    """Test that inline /* ... */ comments inside torznab array are correctly
+    skipped, even when they contain ] or ) that could confuse naive parsing."""
+    result = replace_torznab_block(
+        FLAT_ARRAY_WITH_BLOCK_COMMENT,
+        ["http://prowlarr:9696/1/api?apikey=new"],
+    )
+
+    assert '"http://prowlarr:9696/1/api?apikey=new"' in result
+    assert "old" not in result
+    assert "delay: 30" in result
+    assert result.count("[") == result.count("]")
+
+
+def test_replace_torznab_block_raises_on_unterminated_block_comment():
+    """An unterminated /* must raise rather than silently mis-parsing the
+    rest of the file."""
+    with pytest.raises(TorznabBlockError):
+        replace_torznab_block(
+            FLAT_ARRAY_WITH_UNTERMINATED_BLOCK_COMMENT,
+            ["http://prowlarr:9696/1/api?apikey=new"],
+        )
