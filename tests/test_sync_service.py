@@ -104,3 +104,38 @@ def test_apply_sync_excludes_public_and_tagged_indexers(tmp_path):
     preview = apply_sync(prowlarr, settings)
 
     assert preview.new_urls == ["http://prowlarr:9696/1/api?apikey=new-key"]
+
+
+def test_compute_sync_preview_with_prowlarr_url_path_prefix(tmp_path):
+    """Test that URL parsing handles PROWLARR_URL with path prefix."""
+    base_url_with_path = "http://prowlarr:9696/prowlarr"
+    # Config has URLs with path prefix matching the prowlarr_url
+    urls = "\n".join(
+        f'    "{base_url_with_path}/{i}/api?apikey=old",' for i in [1, 2]
+    )
+    config_path = tmp_path / "config.js"
+    config_path.write_text(CONFIG_TEMPLATE.format(urls=urls))
+
+    prowlarr = FakeProwlarr(
+        indexers=[
+            Indexer(id=1, name="A", enable=True, privacy="private", tags=[]),
+            Indexer(id=3, name="B", enable=True, privacy="private", tags=[]),
+        ],
+        tags=[],
+    )
+    # Create settings with the path-prefixed URL
+    values = {
+        "PROWLARR_URL": base_url_with_path,
+        "PROWLARR_API_KEY": "new-key",
+        "CROSSSEED_URL": "http://cross-seed:2468",
+        "CROSSSEED_API_KEY": "cs-key",
+        "CROSSSEED_CONFIG_PATH": str(config_path.parent),
+    }
+    settings = Settings(_env_file=None, **{k.lower(): v for k, v in values.items()})
+
+    preview = compute_sync_preview(prowlarr, settings)
+
+    assert preview.added == [f"{base_url_with_path}/3/api?apikey=new-key"]
+    assert preview.removed == [f"{base_url_with_path}/2/api?apikey=old"]
+    # config.js reste inchangé après un simple preview
+    assert "old" in config_path.read_text()
