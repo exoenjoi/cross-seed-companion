@@ -199,3 +199,95 @@ def test_render_action_leaves_non_string_body_values_untouched():
     _, _, body = render_action(action, _settings())
 
     assert body == {"name": "search", "ignoreExcludeOlder": True}
+
+
+def test_render_action_raises_on_malformed_placeholder_with_hyphen():
+    action = Action(
+        id="bad-hyphen",
+        title="Bad hyphen",
+        method="GET",
+        url="${SOME-VAR}",
+        body=None,
+        confirm=None,
+        input_label=None,
+    )
+
+    with pytest.raises(MissingActionVariableError):
+        render_action(action, _settings())
+
+
+def test_render_action_raises_on_malformed_placeholder_with_dot():
+    action = Action(
+        id="bad-dot",
+        title="Bad dot",
+        method="GET",
+        url="${SOME.VAR}",
+        body=None,
+        confirm=None,
+        input_label=None,
+    )
+
+    with pytest.raises(MissingActionVariableError):
+        render_action(action, _settings())
+
+
+def test_render_action_raises_on_empty_placeholder():
+    action = Action(
+        id="bad-empty",
+        title="Bad empty",
+        method="GET",
+        url="prefix ${}",
+        body=None,
+        confirm=None,
+        input_label=None,
+    )
+
+    with pytest.raises(MissingActionVariableError):
+        render_action(action, _settings())
+
+
+def test_render_action_substitutes_placeholders_in_nested_dict_body():
+    action = Action(
+        id="nested-dict",
+        title="Nested dict",
+        method="POST",
+        url="${CROSSSEED_URL}/api/job",
+        body={"nested": {"infoHash": "${INPUT}"}},
+        confirm=None,
+        input_label="InfoHash",
+    )
+
+    _, _, body = render_action(action, _settings(), user_input="abc123")
+
+    assert body == {"nested": {"infoHash": "abc123"}}
+
+
+def test_render_action_substitutes_placeholders_in_list_body():
+    action = Action(
+        id="list-body",
+        title="List body",
+        method="POST",
+        url="${CROSSSEED_URL}/api/job",
+        body={"items": ["${CROSSSEED_API_KEY}", 1], "flag": True},
+        confirm=None,
+        input_label=None,
+    )
+
+    _, _, body = render_action(action, _settings())
+
+    assert body == {"items": ["cs-key", 1], "flag": True}
+
+
+def test_render_action_raises_on_unknown_placeholder_in_nested_dict():
+    action = Action(
+        id="nested-unknown",
+        title="Nested unknown",
+        method="POST",
+        url="${CROSSSEED_URL}/api/job",
+        body={"nested": {"infoHash": "${UNKNOWN_VAR}"}},
+        confirm=None,
+        input_label=None,
+    )
+
+    with pytest.raises(MissingActionVariableError):
+        render_action(action, _settings())
