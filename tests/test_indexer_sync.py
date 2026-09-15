@@ -1,6 +1,5 @@
 from app.indexer_sync import (
     build_torznab_urls,
-    compute_diff,
     filter_indexers,
     resolve_excluded_tag_id,
 )
@@ -51,13 +50,3 @@ def test_build_torznab_urls_formats_official_crossseed_pattern():
         "http://prowlarr:9696/6/api?apikey=prowlarr-key",
         "http://prowlarr:9696/22/api?apikey=prowlarr-key",
     ]
-
-
-def test_compute_diff_returns_added_and_removed():
-    old = ["http://a/1/api?apikey=k", "http://a/2/api?apikey=k"]
-    new = ["http://a/2/api?apikey=k", "http://a/3/api?apikey=k"]
-
-    added, removed = compute_diff(old, new)
-
-    assert added == ["http://a/3/api?apikey=k"]
-    assert removed == ["http://a/1/api?apikey=k"]

@@ -7,12 +7,18 @@ services:
     environment:
       PROWLARR_URL: "http://prowlarr:9696"
       PROWLARR_API_KEY: "changeme"
+      # Requis au démarrage mais pas encore utilisés en phase 1 (réservés
+      # pour une fonctionnalité future).
       CROSSSEED_URL: "http://cross-seed:2468"
       CROSSSEED_API_KEY: "changeme"
       CROSSSEED_CONFIG_PATH: "/crossseed-config"
       SYNC_EXCLUDE_PUBLIC: "true"
       SYNC_EXCLUDE_TAG: "no-cross-seed"
+      # Pas encore implémenté en phase 1 — n'a aucun effet pour l'instant.
       SYNC_INTERVAL_MINUTES: "60"
       DOCKER_MANAGER_URL: "https://portainer.example.com"
+    # N'exposez pas ce port directement sur internet : aucune authentification
+    # ni protection CSRF intégrée. Mettez-le derrière votre reverse proxy
+    # authentifié, ou restreignez-le à un réseau privé.
     volumes:
       - /path/to/cross-seed/config:/crossseed-config

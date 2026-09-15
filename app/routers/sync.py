@@ -17,8 +17,8 @@ def sync_page(request: Request):
     prowlarr = request.app.state.prowlarr_client
     try:
         preview = compute_sync_preview(prowlarr, settings)
-    except (TorznabBlockError, OSError, httpx.HTTPError) as exc:
-        return templates.TemplateResponse(request, "_error.html", {"message": str(exc)})
+    except (TorznabBlockError, OSError, httpx.HTTPError, ValueError) as exc:
+        return templates.TemplateResponse(request, "_error_page.html", {"message": str(exc)})
     return templates.TemplateResponse(
         request, "sync.html", {"preview": preview, "applied": False, "settings": settings}
     )
@@ -30,7 +30,7 @@ def sync_apply(request: Request):
     prowlarr = request.app.state.prowlarr_client
     try:
         preview = apply_sync(prowlarr, settings)
-    except (TorznabBlockError, OSError, httpx.HTTPError) as exc:
+    except (TorznabBlockError, OSError, httpx.HTTPError, ValueError) as exc:
         return templates.TemplateResponse(request, "_error.html", {"message": str(exc)})
     return templates.TemplateResponse(
         request, "_sync_result.html", {"preview": preview, "applied": True, "settings": settings}

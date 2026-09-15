@@ -34,11 +34,3 @@ def build_torznab_urls(
 ) -> list[str]:
     base = prowlarr_url.rstrip("/")
     return [f"{base}/{indexer_id}/api?apikey={prowlarr_api_key}" for indexer_id in indexer_ids]
-
-
-def compute_diff(old_urls: list[str], new_urls: list[str]) -> tuple[list[str], list[str]]:
-    old_set = set(old_urls)
-    new_set = set(new_urls)
-    added = sorted(new_set - old_set)
-    removed = sorted(old_set - new_set)
-    return added, removed

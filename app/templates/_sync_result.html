@@ -7,7 +7,7 @@
   {% for url in preview.removed %}<tr><td class="removed">- {{ url }}</td></tr>{% endfor %}
 </table>
 {% endif %}
-{% if not preview.added and not preview.removed %}
+{% if preview.current_urls == preview.new_urls %}
   <p class="notice">Déjà synchronisé, rien à faire.</p>
 {% elif applied %}
   <p class="notice">

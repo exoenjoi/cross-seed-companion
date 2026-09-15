@@ -139,3 +139,71 @@ def test_compute_sync_preview_with_prowlarr_url_path_prefix(tmp_path):
     assert preview.removed == [f"{base_url_with_path}/2/api?apikey=old"]
     # config.js reste inchangé après un simple preview
     assert "old" in config_path.read_text()
+
+
+def test_compute_sync_preview_treats_unparseable_current_url_as_removed(tmp_path):
+    """A config.js written by hand (or by another tool) can contain URLs that
+    don't match Prowlarr's /{id}/api? shape at all, e.g. a Jackett-style
+    indexer URL. This must not raise — it should be reported as removed,
+    since the flat-array replacement will in fact drop it on apply."""
+    jackett_url = "http://jackett:9117/api/v2.0/indexers/x/results/torznab/"
+    config_path = tmp_path / "config.js"
+    config_path.write_text(
+        CONFIG_TEMPLATE.format(
+            urls=(
+                '    "http://prowlarr:9696/1/api?apikey=old",\n'
+                f'    "{jackett_url}",'
+            )
+        )
+    )
+    prowlarr = FakeProwlarr(
+        indexers=[Indexer(id=1, name="A", enable=True, privacy="private", tags=[])],
+        tags=[],
+    )
+    settings = _settings(config_path)
+
+    preview = compute_sync_preview(prowlarr, settings)
+
+    assert preview.added == []
+    assert preview.removed == [jackett_url]
+
+
+def test_preview_not_noop_when_api_key_rotated_for_same_id(tmp_path):
+    """Same indexer id on both sides but a different API key (rotation) must
+    not be classified as a no-op, even though id-based added/removed are
+    both empty."""
+    config_path = _write_config(tmp_path, existing_ids=[1])
+    prowlarr = FakeProwlarr(
+        indexers=[Indexer(id=1, name="A", enable=True, privacy="private", tags=[])],
+        tags=[],
+    )
+    settings = _settings(config_path)  # prowlarr_api_key="new-key" vs config's "old"
+
+    preview = compute_sync_preview(prowlarr, settings)
+
+    assert preview.added == []
+    assert preview.removed == []
+    assert preview.current_urls != preview.new_urls
+
+
+def test_apply_sync_skips_backup_and_write_when_truly_noop(tmp_path):
+    config_path = _write_config(tmp_path, existing_ids=[1])
+    prowlarr = FakeProwlarr(
+        indexers=[Indexer(id=1, name="A", enable=True, privacy="private", tags=[])],
+        tags=[],
+    )
+    settings = Settings(
+        _env_file=None,
+        prowlarr_url="http://prowlarr:9696",
+        prowlarr_api_key="old",  # matches the config's existing key -> true no-op
+        crossseed_url="http://cross-seed:2468",
+        crossseed_api_key="cs-key",
+        crossseed_config_path=str(config_path.parent),
+    )
+    original_text = config_path.read_text()
+
+    preview = apply_sync(prowlarr, settings)
+
+    assert preview.current_urls == preview.new_urls
+    assert config_path.read_text() == original_text
+    assert list(tmp_path.glob("config.js.bak.*")) == []

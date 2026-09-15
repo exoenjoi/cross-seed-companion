@@ -104,7 +104,10 @@ def replace_torznab_block(config_text: str, urls: list[str]) -> str:
 
 
 def read_config(path: Path) -> str:
-    return path.read_text()
+    # newline="" disables universal-newline translation so CRLF/CR content
+    # round-trips through read_config/write_config unchanged.
+    with path.open("r", newline="") as f:
+        return f.read()
 
 
 def backup_config(path: Path) -> Path:
@@ -115,4 +118,5 @@ def backup_config(path: Path) -> Path:
 
 
 def write_config(path: Path, new_text: str) -> None:
-    path.write_text(new_text)
+    with path.open("w", newline="") as f:
+        f.write(new_text)
