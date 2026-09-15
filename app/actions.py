@@ -28,9 +28,13 @@ _REQUIRED_FIELDS = ("id", "title", "method", "url")
 
 
 def _parse_action(raw: dict) -> Action:
+    if not isinstance(raw, dict):
+        raise ActionConfigError(f"Action invalide, mapping YAML attendu : {raw!r}")
     for key in _REQUIRED_FIELDS:
         if key not in raw:
             raise ActionConfigError(f"Action invalide, champ '{key}' manquant : {raw}")
+    if not isinstance(raw["method"], str):
+        raise ActionConfigError(f"Action '{raw['id']}' : le champ 'method' doit être une chaîne.")
     return Action(
         id=raw["id"],
         title=raw["title"],
@@ -43,7 +47,14 @@ def _parse_action(raw: dict) -> Action:
 
 
 def load_actions_file(path: Path) -> list[Action]:
-    raw = yaml.safe_load(path.read_text())
+    try:
+        text = path.read_text()
+    except OSError as exc:
+        raise ActionConfigError(f"Fichier d'actions illisible : {path} ({exc})") from exc
+    try:
+        raw = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        raise ActionConfigError(f"YAML invalide dans {path} : {exc}") from exc
     if raw is None:
         raw = []
     if not isinstance(raw, list):
@@ -59,6 +70,11 @@ def load_all_actions(custom_path: Path | None) -> list[Action]:
     actions = load_builtin_actions()
     if custom_path is not None:
         actions = actions + load_actions_file(custom_path)
+    seen: set[str] = set()
+    for action in actions:
+        if action.id in seen:
+            raise ActionConfigError(f"Action en double : l'id '{action.id}' est utilisé plusieurs fois.")
+        seen.add(action.id)
     return actions
 
 

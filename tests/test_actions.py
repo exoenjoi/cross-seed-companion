@@ -78,6 +78,49 @@ def test_load_actions_file_raises_when_not_a_list(tmp_path):
         load_actions_file(path)
 
 
+def test_load_actions_file_raises_on_nonexistent_path(tmp_path):
+    path = tmp_path / "does-not-exist.yml"
+
+    with pytest.raises(ActionConfigError):
+        load_actions_file(path)
+
+
+def test_load_actions_file_raises_on_non_mapping_list_item(tmp_path):
+    path = tmp_path / "custom.yml"
+    path.write_text("- \"just a string\"\n")
+
+    with pytest.raises(ActionConfigError):
+        load_actions_file(path)
+
+
+def test_load_actions_file_raises_on_non_string_method(tmp_path):
+    path = tmp_path / "custom.yml"
+    path.write_text(
+        "- id: bad-method\n  title: \"Bad method\"\n  method: 5\n  url: \"http://x\"\n"
+    )
+
+    with pytest.raises(ActionConfigError):
+        load_actions_file(path)
+
+
+def test_load_actions_file_raises_on_malformed_yaml(tmp_path):
+    path = tmp_path / "custom.yml"
+    path.write_text("- id: [unclosed\n")
+
+    with pytest.raises(ActionConfigError):
+        load_actions_file(path)
+
+
+def test_load_all_actions_raises_on_duplicate_id_with_builtin(tmp_path):
+    custom_path = tmp_path / "custom.yml"
+    custom_path.write_text(
+        "- id: search\n  title: \"Fake search\"\n  method: POST\n  url: \"http://x\"\n"
+    )
+
+    with pytest.raises(ActionConfigError):
+        load_all_actions(custom_path)
+
+
 def test_load_builtin_actions_has_six_actions_with_unique_ids():
     actions = load_builtin_actions()
 
