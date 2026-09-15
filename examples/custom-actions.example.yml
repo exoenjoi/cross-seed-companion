@@ -8,6 +8,8 @@
 # ${PROWLARR_URL}, ${PROWLARR_API_KEY}, ${INPUT} (uniquement si input_label
 # est défini). Toute autre variable fait échouer l'action avec un message
 # d'erreur explicite — jamais d'exécution shell, jamais de code arbitraire.
+# ${INPUT} n'est pas encodé pour une URL : utilisez-le dans "body", pas dans
+# "url" (un espace, un "&" ou un "#" dans la valeur saisie casserait l'URL).
 
 - id: force-full-search-slow
   title: "Recherche complète (variante custom)"

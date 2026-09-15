@@ -7,8 +7,8 @@ services:
     environment:
       PROWLARR_URL: "http://prowlarr:9696"
       PROWLARR_API_KEY: "changeme"
-      # Required at startup but not yet used in phase 1 (reserved for a
-      # future feature).
+      # Required at startup and used by the Phase 2 actions feature
+      # (built-in search/notify actions call the cross-seed API using these).
       CROSSSEED_URL: "http://cross-seed:2468"
       CROSSSEED_API_KEY: "changeme"
       CROSSSEED_CONFIG_PATH: "/crossseed-config"
@@ -18,7 +18,7 @@ services:
       SYNC_INTERVAL_MINUTES: "60"
       DOCKER_MANAGER_URL: "https://portainer.example.com"
       # Optional: path to a custom actions YAML file (see examples/custom-actions.example.yml)
-      ACTIONS_CONFIG_PATH: "/crossseed-config/custom-actions.yml"
+      # ACTIONS_CONFIG_PATH: "/crossseed-config/custom-actions.yml"
     # Do not expose this port directly to the internet: no authentication or
     # CSRF protection is built in. Put it behind your own authenticated
     # reverse proxy, or restrict it to a private network.
