@@ -19,8 +19,14 @@ services:
       DOCKER_MANAGER_URL: "https://portainer.example.com"
       # Optional: path to a custom actions YAML file (see examples/custom-actions.example.yml)
       # ACTIONS_CONFIG_PATH: "/crossseed-config/custom-actions.yml"
+      # Optional: separate read-only mount for cross-seed's logs/ directory.
+      # If unset, defaults to CROSSSEED_CONFIG_PATH/logs.
+      # CROSSSEED_LOGS_PATH: "/crossseed-logs"
     # Do not expose this port directly to the internet: no authentication or
     # CSRF protection is built in. Put it behind your own authenticated
     # reverse proxy, or restrict it to a private network.
     volumes:
       - /path/to/cross-seed/config:/crossseed-config
+      # Optional: mount cross-seed's logs/ separately and read-only instead of
+      # relying on it being a subdirectory of the volume above.
+      # - /path/to/cross-seed/config/logs:/crossseed-logs:ro
