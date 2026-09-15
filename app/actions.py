@@ -1,7 +1,10 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+
+from app.config import Settings
 
 BUILTIN_ACTIONS_PATH = Path(__file__).resolve().parent / "actions_builtin.yaml"
 
@@ -64,3 +67,50 @@ def find_action(actions: list[Action], action_id: str) -> Action | None:
         if action.id == action_id:
             return action
     return None
+
+
+_VAR_RE = re.compile(r"\$\{(\w+)\}")
+
+
+class MissingActionVariableError(Exception):
+    """Levée quand une action référence une variable ${...} inconnue ou un ${INPUT} non fourni."""
+
+
+def _available_variables(settings: Settings, user_input: str | None) -> dict[str, str]:
+    variables = {
+        "CROSSSEED_URL": settings.crossseed_url,
+        "CROSSSEED_API_KEY": settings.crossseed_api_key,
+        "PROWLARR_URL": settings.prowlarr_url,
+        "PROWLARR_API_KEY": settings.prowlarr_api_key,
+    }
+    if user_input is not None:
+        variables["INPUT"] = user_input
+    return variables
+
+
+def _substitute(text: str, variables: dict[str, str]) -> str:
+    def replace(match: re.Match) -> str:
+        name = match.group(1)
+        if name not in variables:
+            raise MissingActionVariableError(
+                f"Variable inconnue ou non fournie dans une action : ${{{name}}}"
+            )
+        return variables[name]
+
+    return _VAR_RE.sub(replace, text)
+
+
+def render_action(
+    action: Action,
+    settings: Settings,
+    user_input: str | None = None,
+) -> tuple[str, str, dict | None]:
+    variables = _available_variables(settings, user_input)
+    url = _substitute(action.url, variables)
+    body = None
+    if action.body is not None:
+        body = {
+            key: (_substitute(value, variables) if isinstance(value, str) else value)
+            for key, value in action.body.items()
+        }
+    return action.method, url, body
