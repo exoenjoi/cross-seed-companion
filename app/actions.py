@@ -69,7 +69,7 @@ def find_action(actions: list[Action], action_id: str) -> Action | None:
     return None
 
 
-_VAR_RE = re.compile(r"\$\{(\w+)\}")
+_VAR_RE = re.compile(r"\$\{([^}]*)\}")
 
 
 class MissingActionVariableError(Exception):
@@ -100,6 +100,20 @@ def _substitute(text: str, variables: dict[str, str]) -> str:
     return _VAR_RE.sub(replace, text)
 
 
+def _substitute_value(value, variables: dict[str, str]):
+    """Recursively substitute placeholders in strings, dicts, lists, and tuples."""
+    if isinstance(value, str):
+        return _substitute(value, variables)
+    elif isinstance(value, dict):
+        return {k: _substitute_value(v, variables) for k, v in value.items()}
+    elif isinstance(value, (list, tuple)):
+        result = [_substitute_value(item, variables) for item in value]
+        return result if isinstance(value, list) else tuple(result)
+    else:
+        # bool, int, None, etc. are returned unchanged
+        return value
+
+
 def render_action(
     action: Action,
     settings: Settings,
@@ -109,8 +123,5 @@ def render_action(
     url = _substitute(action.url, variables)
     body = None
     if action.body is not None:
-        body = {
-            key: (_substitute(value, variables) if isinstance(value, str) else value)
-            for key, value in action.body.items()
-        }
+        body = _substitute_value(action.body, variables)
     return action.method, url, body
