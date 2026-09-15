@@ -17,6 +17,8 @@ services:
       # Not implemented yet in phase 1 — currently has no effect.
       SYNC_INTERVAL_MINUTES: "60"
       DOCKER_MANAGER_URL: "https://portainer.example.com"
+      # Optional: path to a custom actions YAML file (see examples/custom-actions.example.yml)
+      ACTIONS_CONFIG_PATH: "/crossseed-config/custom-actions.yml"
     # Do not expose this port directly to the internet: no authentication or
     # CSRF protection is built in. Put it behind your own authenticated
     # reverse proxy, or restrict it to a private network.
