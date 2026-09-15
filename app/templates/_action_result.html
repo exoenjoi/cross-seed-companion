@@ -1,0 +1,8 @@
+{% if ok %}
+<div class="notice">{{ message }}</div>
+{% else %}
+<div class="error-box">
+  <span class="error-tag">Erreur</span>
+  {{ message }}
+</div>
+{% endif %}
