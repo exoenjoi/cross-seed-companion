@@ -1,0 +1,18 @@
+services:
+  cross-seed-companion:
+    image: cross-seed-companion:latest
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      PROWLARR_URL: "http://prowlarr:9696"
+      PROWLARR_API_KEY: "changeme"
+      CROSSSEED_URL: "http://cross-seed:2468"
+      CROSSSEED_API_KEY: "changeme"
+      CROSSSEED_CONFIG_PATH: "/crossseed-config"
+      SYNC_EXCLUDE_PUBLIC: "true"
+      SYNC_EXCLUDE_TAG: "no-cross-seed"
+      SYNC_INTERVAL_MINUTES: "60"
+      DOCKER_MANAGER_URL: "https://portainer.example.com"
+    volumes:
+      - /path/to/cross-seed/config:/crossseed-config
