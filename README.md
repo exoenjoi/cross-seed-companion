@@ -85,18 +85,14 @@ Everything is configured through environment variables.
 |---|---|---|
 | `PROWLARR_URL` | yes | Prowlarr's base URL |
 | `PROWLARR_API_KEY` | yes | Prowlarr API key |
-| `CROSSSEED_URL` | yes\* | cross-seed daemon's base URL |
-| `CROSSSEED_API_KEY` | yes\* | cross-seed API key |
+| `CROSSSEED_URL` | yes | cross-seed daemon's base URL (used by Phase 2 declarative actions) |
+| `CROSSSEED_API_KEY` | yes | cross-seed API key (used by Phase 2 declarative actions) |
 | `CROSSSEED_CONFIG_PATH` | yes | Path (bind mount) to cross-seed's config directory |
 | `SYNC_EXCLUDE_PUBLIC` | no | Exclude public-tracker indexers from the sync (default: `false`) |
 | `SYNC_EXCLUDE_TAG` | no | Name of a Prowlarr tag; indexers carrying it are excluded from the sync |
 | `SYNC_INTERVAL_MINUTES` | no | **Not implemented yet** — reserved for a future phase, currently has no effect |
 | `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
 | `ACTIONS_CONFIG_PATH` | no | Path to an optional custom actions YAML file (see `examples/custom-actions.example.yml`) |
-
-\* `CROSSSEED_URL`/`CROSSSEED_API_KEY` are required at startup (config
-validation) but unused by any Phase 1 feature — they're placeholders for the
-job-trigger feature planned next.
 
 ## Security
 
