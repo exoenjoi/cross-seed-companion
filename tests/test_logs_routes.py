@@ -88,3 +88,51 @@ def test_sse_log_stream_yields_new_entries_then_stops_on_disconnect(tmp_path):
     assert "live entry" in events[0]
     assert events[0].startswith("data: ")
     assert events[0].endswith("\n\n")
+
+
+def test_sse_log_stream_checks_disconnect_before_polling(tmp_path):
+    """Verify that is_disconnected() is checked BEFORE polling for new entries.
+
+    This test has the client disconnect on the very first is_disconnected() call.
+    LogTailer only returns complete entries (entries closed by the next timestamped line).
+    To have a complete entry ready on the first poll, we append 2 lines (first gets closed by second).
+
+    If disconnect is checked BEFORE polling: yields 0 events (breaks before reading).
+    If disconnect is checked AFTER polling: yields 1 event (reads the complete entry first).
+    The test discriminates the ordering and will fail if changed to check-after.
+    """
+    target = tmp_path / "verbose.2026-09-15.log"
+    target.write_text("")
+    current = tmp_path / "verbose.current.log"
+    current.symlink_to(target)
+    tailer = LogTailer(current)
+    tailer.read_new_entries()  # Initialize: file pointer at EOF of empty file
+
+    # Append TWO entries AFTER tailer initialization
+    # LogTailer returns complete entries only. Entry 1 is closed by entry 2's timestamp.
+    with target.open("a") as f:
+        f.write("2026-09-15 00:00:00.000 info: [scheduler] entry 1\n")
+        f.write("2026-09-15 00:00:01.000 info: [scheduler] entry 2 closes entry 1\n")
+
+    async def scenario():
+        events = []
+        # disconnect_after=0 means: first is_disconnected() call returns True
+        request = _FakeRequest(disconnect_after=0)
+        async for event in logs_router.sse_log_stream(tailer, request, poll_interval=0.01):
+            events.append(event)
+        return events
+
+    events = asyncio.run(scenario())
+
+    # With check-before ordering (correct implementation):
+    # - First loop iteration calls is_disconnected() -> True
+    # - Breaks BEFORE calling read_new_entries()
+    # - Result: 0 events
+    #
+    # With check-after ordering (incorrect):
+    # - First loop iteration calls read_new_entries() first
+    #   -> finds 2 lines, entry 1 is complete (closed by entry 2), yields it
+    # - Then sleeps
+    # - Then calls is_disconnected() -> True, breaks
+    # - Result: 1 event (test would fail)
+    assert len(events) == 0, "Expected 0 events when disconnect checked before poll"

@@ -54,6 +54,12 @@ class LogTailer:
                 self._pending.message += "\n" + line
         return entries
 
+    def close(self) -> None:
+        """Close the underlying file handle if open."""
+        if self._file is not None:
+            self._file.close()
+            self._file = None
+
 
 def read_recent_entries(path: Path, max_entries: int = 200) -> list[LogEntry]:
     # ponytail: lit tout le fichier courant (un jour de logs) plutôt que de faire

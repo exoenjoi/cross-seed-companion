@@ -27,13 +27,16 @@ async def sse_log_stream(
     request: Request,
     poll_interval: float = 1.0,
 ) -> AsyncIterator[str]:
-    while True:
-        if await request.is_disconnected():
-            break
-        for entry in tailer.read_new_entries():
-            html = templates.get_template("_log_line.html").render(entry=entry)
-            yield format_sse_event(html)
-        await asyncio.sleep(poll_interval)
+    try:
+        while True:
+            if await request.is_disconnected():
+                break
+            for entry in tailer.read_new_entries():
+                html = templates.get_template("_log_line.html").render(entry=entry)
+                yield format_sse_event(html)
+            await asyncio.sleep(poll_interval)
+    finally:
+        tailer.close()
 
 
 @router.get("/logs")
