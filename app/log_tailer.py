@@ -26,8 +26,8 @@ class LogTailer:
             self._file = target.open("r")
             if self._first_open:
                 self._file.seek(0, 2)  # fin de fichier : le backfill gère déjà l'historique
-        self._target = target
-        self._first_open = False
+            self._target = target
+            self._first_open = False
         return True
 
     def read_new_entries(self) -> list[LogEntry]:
