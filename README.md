@@ -27,7 +27,7 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 
 ## Features
 
-**Phase 1 & 2 (shipped):**
+**Phase 1, 2 & 3 (shipped):**
 
 - **Indexer sync** — pulls your enabled indexers from Prowlarr and writes them into
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
@@ -41,9 +41,13 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   using the same schema as the built-in actions — no code changes, and no
   `subprocess`/shell involved: every action is a plain HTTP call with
   whitelist-only variable substitution.
+- **Real-time logs** — a `/logs` page streams cross-seed's `verbose.current.log`
+  live over Server-Sent Events, with a short backfill on load and a client-side
+  text filter. v1 shows only the current day's log (no browsing older rotated
+  files yet — see Roadmap).
 
-**Planned (not yet built — see [Roadmap](#roadmap)):** real-time log streaming,
-and a list of recently cross-seeded torrents.
+**Planned (not yet built — see [Roadmap](#roadmap)):** a list of recently
+cross-seeded torrents.
 
 ## Architecture
 
@@ -93,6 +97,7 @@ Everything is configured through environment variables.
 | `SYNC_INTERVAL_MINUTES` | no | **Not implemented yet** — reserved for a future phase, currently has no effect |
 | `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
 | `ACTIONS_CONFIG_PATH` | no | Path to an optional custom actions YAML file (see `examples/custom-actions.example.yml`) |
+| `CROSSSEED_LOGS_PATH` | no | Path to cross-seed's `logs/` directory, if mounted separately (defaults to `CROSSSEED_CONFIG_PATH/logs`) |
 
 ## Security
 
@@ -108,12 +113,16 @@ driven by user-supplied configuration.
 
 ## Roadmap
 
-Phases 1 (indexer sync) and 2 (declarative actions) are done. Two more phases
-are planned, each shippable independently:
+Phases 1 (indexer sync), 2 (declarative actions) and 3 (real-time logs) are
+done. One more phase is planned:
 
-3. Real-time cross-seed log viewing.
 4. A list of torrents cross-seed has actually cross-seeded, parsed from its
    logs, without requiring a qBittorrent connection.
+
+Browsing older, already-rotated log files (beyond the current day shown by
+Phase 3) is a plausible future addition — the log parser was deliberately
+kept independent of the live-tailing code so it could be reused for that
+without a rewrite.
 
 ## Contributing
 
