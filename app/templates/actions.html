@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-tag">02 · Actions</span>
+<h1 class="page-title">Actions cross-seed</h1>
+
+<div id="ping-badge" hx-get="/actions/ping" hx-trigger="load, every 15s" hx-swap="innerHTML">
+  {% include "_ping_badge.html" %}
+</div>
+
+<div class="actions-list" style="margin-top: 1.5rem;">
+  {% for action in actions %}
+  <form class="action-row"
+        hx-post="/actions/{{ action.id }}/run"
+        hx-target="#action-result"
+        {% if action.confirm %}hx-confirm="{{ action.confirm }}"{% endif %}>
+    <span class="action-title">{{ action.title }}</span>
+    {% if action.input_label %}
+    <input type="text" name="input" placeholder="{{ action.input_label }}" required>
+    {% endif %}
+    <button type="submit">Lancer</button>
+  </form>
+  {% endfor %}
+</div>
+
+<div id="action-result" style="margin-top: 1.5rem;"></div>
+{% endblock %}

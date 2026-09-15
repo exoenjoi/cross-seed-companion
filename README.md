@@ -27,16 +27,23 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 
 ## Features
 
-**Phase 1 (shipped):**
+**Phase 1 & 2 (shipped):**
 
 - **Indexer sync** — pulls your enabled indexers from Prowlarr and writes them into
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
   and a timestamped backup before any write. Optionally exclude public trackers
   and/or indexers carrying a specific Prowlarr tag.
+- **Declarative actions** — trigger cross-seed's job API (search, full search,
+  cleanup, RSS, indexer-cap refresh, notify by infoHash) from a `/actions` page,
+  plus a live cross-seed health badge. Extensible via an optional custom YAML
+  file (`ACTIONS_CONFIG_PATH`, see
+  [`examples/custom-actions.example.yml`](./examples/custom-actions.example.yml))
+  using the same schema as the built-in actions — no code changes, and no
+  `subprocess`/shell involved: every action is a plain HTTP call with
+  whitelist-only variable substitution.
 
-**Planned (not yet built — see [Roadmap](#roadmap)):** triggering cross-seed's job
-API from the UI, real-time log streaming, and a list of recently cross-seeded
-torrents.
+**Planned (not yet built — see [Roadmap](#roadmap)):** real-time log streaming,
+and a list of recently cross-seeded torrents.
 
 ## Architecture
 
@@ -78,17 +85,14 @@ Everything is configured through environment variables.
 |---|---|---|
 | `PROWLARR_URL` | yes | Prowlarr's base URL |
 | `PROWLARR_API_KEY` | yes | Prowlarr API key |
-| `CROSSSEED_URL` | yes\* | cross-seed daemon's base URL |
-| `CROSSSEED_API_KEY` | yes\* | cross-seed API key |
+| `CROSSSEED_URL` | yes | cross-seed daemon's base URL (used by Phase 2 declarative actions) |
+| `CROSSSEED_API_KEY` | yes | cross-seed API key (used by Phase 2 declarative actions) |
 | `CROSSSEED_CONFIG_PATH` | yes | Path (bind mount) to cross-seed's config directory |
 | `SYNC_EXCLUDE_PUBLIC` | no | Exclude public-tracker indexers from the sync (default: `false`) |
 | `SYNC_EXCLUDE_TAG` | no | Name of a Prowlarr tag; indexers carrying it are excluded from the sync |
 | `SYNC_INTERVAL_MINUTES` | no | **Not implemented yet** — reserved for a future phase, currently has no effect |
 | `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
-
-\* `CROSSSEED_URL`/`CROSSSEED_API_KEY` are required at startup (config
-validation) but unused by any Phase 1 feature — they're placeholders for the
-job-trigger feature planned next.
+| `ACTIONS_CONFIG_PATH` | no | Path to an optional custom actions YAML file (see `examples/custom-actions.example.yml`) |
 
 ## Security
 
@@ -104,12 +108,9 @@ driven by user-supplied configuration.
 
 ## Roadmap
 
-Phase 1 (indexer sync) is done. Three more phases are planned, each shippable
-independently:
+Phases 1 (indexer sync) and 2 (declarative actions) are done. Two more phases
+are planned, each shippable independently:
 
-2. Declarative, non-shell triggers for cross-seed's job API (search, RSS,
-   cleanup, indexer-cap refresh, health check), extensible via a YAML action
-   file — no `subprocess`, ever.
 3. Real-time cross-seed log viewing.
 4. A list of torrents cross-seed has actually cross-seeded, parsed from its
    logs, without requiring a qBittorrent connection.

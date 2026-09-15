@@ -116,11 +116,61 @@
       letter-spacing: 0.15em;
       margin-bottom: 0.4rem;
     }
+    nav.tabs {
+      display: flex;
+      gap: 1.25rem;
+    }
+    nav.tabs a {
+      color: var(--fg-dim);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    nav.tabs a:hover {
+      color: var(--fg);
+    }
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 0.7rem 0.9rem;
+    }
+    .action-row .action-title {
+      flex: 1;
+      font-size: 0.85rem;
+    }
+    .action-row input[type="text"] {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      padding: 0.4rem 0.6rem;
+      border-radius: 3px;
+    }
+    .ping-badge {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+    .ping-ok { color: var(--accent); }
+    .ping-down { color: var(--danger); }
   </style>
 </head>
 <body>
   <header class="topbar">
     <span class="brand">Cross-Seed Companion</span>
+    <nav class="tabs">
+      <a href="/sync">Sync</a>
+      <a href="/actions">Actions</a>
+    </nav>
   </header>
   <main>
     {% block content %}{% endblock %}
