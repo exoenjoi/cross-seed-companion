@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,11 +33,13 @@ def _config_path(settings: Settings) -> Path:
 def _extract_indexer_id(url: str) -> int:
     """Extract indexer ID from a Prowlarr torznab URL.
 
-    URL format: "http://prowlarr:9696/{id}/api?apikey=..."
+    Matches the pattern /{id}/api? in the URL to handle any base URL shape,
+    including those with path prefixes (e.g. http://host/prowlarr/{id}/api?...).
     """
-    parts = url.split('/')
-    # parts[3] should be the indexer ID
-    return int(parts[3])
+    match = re.search(r'/(\d+)/api\?', url)
+    if match:
+        return int(match.group(1))
+    raise ValueError(f"Could not extract indexer ID from URL: {url}")
 
 
 def _build_new_urls(prowlarr: ProwlarrClient, settings: Settings) -> list[str]:
