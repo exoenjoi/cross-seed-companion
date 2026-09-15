@@ -1,0 +1,92 @@
+import re
+from datetime import datetime
+from pathlib import Path
+
+_QUOTE_CHARS = "\"'`"
+_TORZNAB_KEY_RE = re.compile(r"\btorznab\s*:\s*")
+_MAP_CALL_RE = re.compile(r"\s*\.map\s*\(")
+
+
+class TorznabBlockError(Exception):
+    """Levée quand le bloc 'torznab:' de config.js ne peut pas être repéré sans ambiguïté."""
+
+
+def _skip_string(text: str, pos: int) -> int:
+    quote = text[pos]
+    i = pos + 1
+    while i < len(text):
+        if text[i] == "\\":
+            i += 2
+            continue
+        if text[i] == quote:
+            return i + 1
+        i += 1
+    raise TorznabBlockError("Chaîne de caractères non terminée dans config.js.")
+
+
+def _find_matching(text: str, open_pos: int, open_ch: str, close_ch: str) -> int:
+    depth = 0
+    i = open_pos
+    while i < len(text):
+        ch = text[i]
+        if ch in _QUOTE_CHARS:
+            i = _skip_string(text, i)
+            continue
+        if ch == open_ch:
+            depth += 1
+        elif ch == close_ch:
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    raise TorznabBlockError(f"'{open_ch}' non refermé dans config.js.")
+
+
+def find_torznab_block(config_text: str) -> tuple[int, int]:
+    matches = list(_TORZNAB_KEY_RE.finditer(config_text))
+    if len(matches) != 1:
+        raise TorznabBlockError(
+            f"'torznab:' doit apparaître exactement une fois dans config.js "
+            f"(trouvé {len(matches)} fois). Abandon sans rien écrire."
+        )
+    array_start = matches[0].end()
+    if array_start >= len(config_text) or config_text[array_start] != "[":
+        raise TorznabBlockError("'torznab:' doit être suivi d'un tableau '['.")
+
+    array_end = _find_matching(config_text, array_start, "[", "]")
+    end = array_end
+
+    map_match = _MAP_CALL_RE.match(config_text, array_end)
+    if map_match:
+        call_open = map_match.end() - 1  # index du '(' d'ouverture
+        end = _find_matching(config_text, call_open, "(", ")")
+
+    return array_start, end
+
+
+def extract_current_urls(config_text: str) -> list[str]:
+    start, end = find_torznab_block(config_text)
+    block = config_text[start:end]
+    return re.findall(r'"([^"]*)"', block)
+
+
+def replace_torznab_block(config_text: str, urls: list[str]) -> str:
+    start, end = find_torznab_block(config_text)
+    lines = "".join(f'    "{url}",\n' for url in urls)
+    array_literal = f"[\n{lines}  ]"
+    return config_text[:start] + array_literal + config_text[end:]
+
+
+def read_config(path: Path) -> str:
+    return path.read_text()
+
+
+def backup_config(path: Path) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    backup_path = path.with_name(f"{path.name}.bak.{timestamp}")
+    backup_path.write_text(path.read_text())
+    return backup_path
+
+
+def write_config(path: Path, new_text: str) -> None:
+    path.write_text(new_text)
