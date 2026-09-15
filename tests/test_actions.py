@@ -291,3 +291,13 @@ def test_render_action_raises_on_unknown_placeholder_in_nested_dict():
 
     with pytest.raises(MissingActionVariableError):
         render_action(action, _settings())
+
+
+EXAMPLE_ACTIONS_PATH = Path(__file__).resolve().parent.parent / "examples" / "custom-actions.example.yml"
+
+
+def test_example_custom_actions_file_parses():
+    actions = load_actions_file(EXAMPLE_ACTIONS_PATH)
+
+    assert len(actions) >= 1
+    assert all(a.method in ("GET", "POST", "PUT", "DELETE", "PATCH") for a in actions)
