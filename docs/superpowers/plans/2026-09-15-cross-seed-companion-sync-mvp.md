@@ -1197,18 +1197,139 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'app.routers'`
 
 - [ ] **Step 4: Implémenter les templates**
 
+Direction visuelle : voir le contrat de direction dans
+`.impeccable/surfaces/app-templates-base-html.md` (console d'opérateur sombre,
+accent ambre unique, données en monospace, hairlines plutôt que des cards à
+ombre — inspiré de getqui.com, choisi avec l'utilisateur). Tout template ou
+CSS ajouté dans les tâches futures (Features 2-4) doit suivre ce même
+contrat plutôt que réinventer un style.
+
 `app/templates/base.html`:
 ```html
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cross-Seed Companion</title>
   <script src="/static/vendor/htmx.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0c0e;
+      --bg-raised: #14161a;
+      --fg: #e8e6e1;
+      --fg-dim: #83807a;
+      --accent: #f5a623;
+      --accent-dim: #7a5518;
+      --danger: #e5484d;
+      --border: #23262b;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header.topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    header.topbar .brand {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    .section-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    h1.page-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 1.75rem;
+    }
+    table.diff {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+    table.diff td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      word-break: break-all;
+    }
+    td.added { color: var(--accent); }
+    td.removed { color: var(--fg-dim); text-decoration: line-through; }
+    .meta {
+      color: var(--fg-dim);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      margin-bottom: 1.25rem;
+    }
+    .actions { margin-top: 1.5rem; }
+    button, .btn {
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+      padding: 0.55rem 1.1rem;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    button:hover, .btn:hover {
+      background: var(--accent);
+      color: #14100a;
+      border-color: var(--accent);
+    }
+    .notice {
+      border: 1px solid var(--border);
+      background: var(--bg-raised);
+      padding: 0.9rem 1rem;
+      font-size: 0.85rem;
+    }
+    .notice a { color: var(--accent); }
+    .error-box {
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 0.9rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+    .error-tag {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.4rem;
+    }
+  </style>
 </head>
 <body>
-  <header><h1>Cross-Seed Companion</h1></header>
+  <header class="topbar">
+    <span class="brand">Cross-Seed Companion</span>
+  </header>
   <main>
     {% block content %}{% endblock %}
   </main>
@@ -1220,7 +1341,8 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'app.routers'`
 ```html
 {% extends "base.html" %}
 {% block content %}
-<h2>Synchronisation des indexers Prowlarr → cross-seed</h2>
+<span class="section-tag">01 · Sync</span>
+<h1 class="page-title">Indexers Prowlarr → cross-seed</h1>
 <div id="sync-result">
   {% include "_sync_result.html" %}
 </div>
@@ -1229,31 +1351,39 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'app.routers'`
 
 `app/templates/_sync_result.html`:
 ```html
-<p>
-  URLs actuelles : {{ preview.current_urls | length }} —
-  URLs après sync : {{ preview.new_urls | length }}
+<p class="meta">
+  {{ preview.current_urls | length }} indexer(s) actuellement — {{ preview.new_urls | length }} après synchronisation
 </p>
-<ul>
-  {% for url in preview.added %}<li>+ {{ url }}</li>{% endfor %}
-  {% for url in preview.removed %}<li>- {{ url }}</li>{% endfor %}
-</ul>
+{% if preview.added or preview.removed %}
+<table class="diff">
+  {% for url in preview.added %}<tr><td class="added">+ {{ url }}</td></tr>{% endfor %}
+  {% for url in preview.removed %}<tr><td class="removed">- {{ url }}</td></tr>{% endfor %}
+</table>
+{% endif %}
 {% if not preview.added and not preview.removed %}
-  <p>Déjà synchronisé, rien à faire.</p>
+  <p class="notice">Déjà synchronisé, rien à faire.</p>
 {% elif applied %}
-  <p>Synchronisation appliquée. Redémarre cross-seed pour appliquer les changements.</p>
-  {% if settings.docker_manager_url %}
-    <p><a href="{{ settings.docker_manager_url }}" target="_blank" rel="noopener">Ouvrir le gestionnaire Docker</a></p>
-  {% endif %}
+  <p class="notice">
+    Synchronisation appliquée. Redémarre cross-seed pour appliquer les changements.
+    {% if settings.docker_manager_url %}
+      <br><a href="{{ settings.docker_manager_url }}" target="_blank" rel="noopener">Ouvrir le gestionnaire Docker →</a>
+    {% endif %}
+  </p>
 {% else %}
-  <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirmer la synchronisation ?">
-    <button type="submit">Confirmer et appliquer</button>
-  </form>
+  <div class="actions">
+    <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirmer la synchronisation ?">
+      <button type="submit">Confirmer et appliquer</button>
+    </form>
+  </div>
 {% endif %}
 ```
 
 `app/templates/_error.html`:
 ```html
-<p class="error">Erreur : {{ message }}</p>
+<div class="error-box">
+  <span class="error-tag">Erreur</span>
+  {{ message }}
+</div>
 ```
 
 - [ ] **Step 5: Implémenter les routes**
