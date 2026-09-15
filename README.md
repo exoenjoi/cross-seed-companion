@@ -1,65 +1,131 @@
 # Cross-Seed Companion (CSC)
 
-Compagnon web self-hosted pour [cross-seed](https://www.cross-seed.org/).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Docker](https://img.shields.io/badge/Docker-single%20image-2496ED?logo=docker&logoColor=white)](./Dockerfile)
+[![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
 
-> Ce projet est développé avec l'assistance d'IA ("vibe codé"), assumé
-> ouvertement. Par prudence, il évite volontairement tout mécanisme
-> sensible : pas de SSH, pas d'accès au socket Docker, pas d'exécution de
-> commande shell depuis la configuration.
+A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — the tool has no UI of its own; CSC gives it one.
 
-## Fonctionnalités (phase 1)
+> **This project is openly AI-assisted ("vibe coded"), and that's disclosed on purpose.**
+> The self-hosted/open-source community is right to be skeptical of AI-generated
+> software, especially around security — so the design deliberately avoids anything
+> with a large attack surface: **no SSH, no Docker socket access, no shell/subprocess
+> execution from user config**, anywhere in the codebase. See [Security](#security)
+> and [Architecture](#architecture) below.
 
-- Synchronisation des indexers activés dans Prowlarr vers le bloc `torznab`
-  de `config.js` de cross-seed, avec aperçu du diff, confirmation, et
-  sauvegarde automatique avant toute écriture.
+## Contents
 
-## Prérequis de déploiement
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quickstart](#quickstart)
+- [Configuration](#configuration)
+- [Security](#security)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
-CSC doit tourner **sur le même hôte Docker que cross-seed**, avec le
-répertoire de configuration de cross-seed monté en bind mount (lecture et
-écriture) dans le container CSC.
+## Features
 
-## Installation
+**Phase 1 (shipped):**
 
-1. Copier `.env.example` vers `.env` et renseigner les valeurs.
-2. Copier `docker-compose.example.yml` vers `docker-compose.yml`, ajuster le
-   chemin du volume vers le répertoire de config de cross-seed.
-3. `docker compose up -d`
-4. Ouvrir `http://<host>:8000/sync`.
+- **Indexer sync** — pulls your enabled indexers from Prowlarr and writes them into
+  cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
+  and a timestamped backup before any write. Optionally exclude public trackers
+  and/or indexers carrying a specific Prowlarr tag.
 
-## Sécurité
+**Planned (not yet built — see [Roadmap](#roadmap)):** triggering cross-seed's job
+API from the UI, real-time log streaming, and a list of recently cross-seeded
+torrents.
 
-CSC n'a **aucune authentification et aucune protection CSRF intégrée**.
-`POST /sync/apply` réécrit un vrai fichier sur disque (`config.js` de
-cross-seed), et l'écran de diff affiche la clé API Prowlarr **en clair**.
-N'exposez jamais ce port directement sur internet : placez-le derrière
-l'authentification de votre propre reverse proxy, ou restreignez-le à un
-réseau privé/VPN.
+## Architecture
 
-## Variables d'environnement
+CSC is a single Python (FastAPI + htmx) Docker image, server-rendered, no
+build step, no Node.js in the image. It's designed to run on the **same
+Docker host as cross-seed**, reading and writing cross-seed's config through a
+bind mount — never over SSH, never through the Docker socket:
 
-| Variable | Requis | Rôle |
+- cross-seed's `config.js` is mounted read-write (needed for the sync feature).
+- cross-seed's `logs/` directory will be mounted read-only for a future phase.
+- cross-seed's internal SQLite database (`cross-seed.db`) is never touched —
+  its schema isn't a stable public contract, unlike the logs and config file.
+
+CSC never restarts cross-seed itself (there's no reliable, sensitive-mechanism-free
+way to do that). After a sync, it shows a manual-restart reminder and, if you set
+`DOCKER_MANAGER_URL`, a direct link to your own Docker management UI (Portainer,
+Dockge, etc.).
+
+## Quickstart
+
+```bash
+git clone https://github.com/exoenjoi/cross-seed-companion.git
+cd cross-seed-companion
+
+cp .env.example .env            # fill in your Prowlarr/cross-seed values
+cp docker-compose.example.yml docker-compose.yml
+# edit docker-compose.yml: point the volume at your real cross-seed config dir
+
+docker compose up -d --build
+```
+
+Then open `http://<host>:8000/sync` — review the diff, confirm, restart cross-seed.
+
+## Configuration
+
+Everything is configured through environment variables.
+
+| Variable | Required | Purpose |
 |---|---|---|
-| `PROWLARR_URL` | oui | URL de base de Prowlarr |
-| `PROWLARR_API_KEY` | oui | Clé API Prowlarr |
-| `CROSSSEED_URL` | oui* | URL de base du daemon cross-seed |
-| `CROSSSEED_API_KEY` | oui* | Clé API cross-seed |
-| `CROSSSEED_CONFIG_PATH` | oui | Chemin (bind mount) vers le répertoire de config cross-seed |
-| `SYNC_EXCLUDE_PUBLIC` | non | Exclut les indexers publics de la sync (défaut : `false`) |
-| `SYNC_EXCLUDE_TAG` | non | Nom d'un tag Prowlarr à exclure de la sync |
-| `SYNC_INTERVAL_MINUTES` | non | **Pas encore implémenté en phase 1** — réservé pour une phase future, n'a aucun effet pour l'instant |
-| `DOCKER_MANAGER_URL` | non | Lien affiché après une sync vers votre outil de gestion Docker |
+| `PROWLARR_URL` | yes | Prowlarr's base URL |
+| `PROWLARR_API_KEY` | yes | Prowlarr API key |
+| `CROSSSEED_URL` | yes\* | cross-seed daemon's base URL |
+| `CROSSSEED_API_KEY` | yes\* | cross-seed API key |
+| `CROSSSEED_CONFIG_PATH` | yes | Path (bind mount) to cross-seed's config directory |
+| `SYNC_EXCLUDE_PUBLIC` | no | Exclude public-tracker indexers from the sync (default: `false`) |
+| `SYNC_EXCLUDE_TAG` | no | Name of a Prowlarr tag; indexers carrying it are excluded from the sync |
+| `SYNC_INTERVAL_MINUTES` | no | **Not implemented yet** — reserved for a future phase, currently has no effect |
+| `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
 
-\* `CROSSSEED_URL`/`CROSSSEED_API_KEY` sont requis au démarrage (validation
-de config) mais ne sont utilisés par aucune fonctionnalité de la phase 1 —
-ce sont des emplacements réservés pour une fonctionnalité future.
+\* `CROSSSEED_URL`/`CROSSSEED_API_KEY` are required at startup (config
+validation) but unused by any Phase 1 feature — they're placeholders for the
+job-trigger feature planned next.
 
-## Important
+## Security
 
-Après une synchronisation, cross-seed doit être **redémarré manuellement**
-pour prendre en compte la nouvelle configuration (CSC ne redémarre jamais de
-container automatiquement).
+CSC has **no authentication and no CSRF protection built in**. `POST
+/sync/apply` rewrites a real file on disk, and the diff view displays your
+Prowlarr API key in plain text. **Never expose this port directly to the
+internet** — put it behind your own reverse proxy's authentication, or
+restrict it to a private network/VPN.
 
-## Licence
+CSC's own hard design constraints (not just this feature's, the whole
+project's): no SSH, no Docker socket access, no shell/subprocess execution
+driven by user-supplied configuration.
 
-MIT — voir [`LICENSE`](./LICENSE).
+## Roadmap
+
+Phase 1 (indexer sync) is done. Three more phases are planned, each shippable
+independently:
+
+2. Declarative, non-shell triggers for cross-seed's job API (search, RSS,
+   cleanup, indexer-cap refresh, health check), extensible via a YAML action
+   file — no `subprocess`, ever.
+3. Real-time cross-seed log viewing.
+4. A list of torrents cross-seed has actually cross-seeded, parsed from its
+   logs, without requiring a qBittorrent connection.
+
+## Contributing
+
+- Tests run with `pytest -v` (install `requirements-dev.txt`).
+- Any behavior change needs a test.
+- Open an issue before a significant feature change, to discuss the approach
+  first — see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+This project's specs, implementation plans, and design-process artifacts were
+produced with [Claude Code](https://claude.com/claude-code) and intentionally
+kept out of version control (`.gitignore`) — they're development scaffolding,
+not part of the shipped app.
+
+## License
+
+MIT — see [`LICENSE`](./LICENSE).

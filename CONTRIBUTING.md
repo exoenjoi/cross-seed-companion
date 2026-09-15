@@ -1,8 +1,8 @@
-# Contribuer à Cross-Seed Companion
+# Contributing to Cross-Seed Companion
 
-Merci de votre intérêt !
+Thanks for your interest!
 
-- Les tests s'exécutent avec `pytest -v` (installer `requirements-dev.txt`).
-- Toute modification de comportement doit être accompagnée d'un test.
-- Ouvrez une issue avant un changement de fonctionnalité important, pour
-  discuter de l'approche.
+- Tests run with `pytest -v` (install `requirements-dev.txt`).
+- Any behavior change needs a test.
+- Open an issue before a significant feature change, to discuss the approach
+  first.
