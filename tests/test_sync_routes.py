@@ -98,7 +98,46 @@ def test_get_sync_lists_current_indexers_when_only_key_rotated(tmp_path):
 
     assert response.status_code == 200
     assert '<span class="idx-name">A</span>' in response.text
-    assert "http://prowlarr:9696/1/api?apikey=old" in response.text
+    assert "http://prowlarr:9696/1/api?apikey=new-key" in response.text
+
+
+def test_get_sync_lists_unchanged_indexers_below_the_diff(tmp_path):
+    """When a real diff exists (e.g. one indexer tagged out), the page must
+    still show the indexers that stay synced, not just what's changing."""
+    config_path = tmp_path / "config.js"
+    config_path.write_text(
+        "module.exports = {\n"
+        '  torznab: [\n'
+        '    "http://prowlarr:9696/1/api?apikey=old",\n'
+        '    "http://prowlarr:9696/2/api?apikey=old"\n'
+        '  ],\n'
+        "  delay: 30,\n"
+        "};\n"
+    )
+    app = FastAPI()
+    app.include_router(sync_router.router)
+    app.state.settings = Settings(
+        _env_file=None,
+        prowlarr_url="http://prowlarr:9696",
+        prowlarr_api_key="new-key",
+        crossseed_url="http://cross-seed:2468",
+        crossseed_api_key="cs-key",
+        crossseed_config_path=str(tmp_path),
+    )
+    app.state.prowlarr_client = FakeProwlarr(
+        indexers=[
+            Indexer(id=1, name="Kept", enable=True, privacy="private", tags=[]),
+            Indexer(id=3, name="New", enable=True, privacy="private", tags=[]),
+        ],
+        tags=[],
+    )
+
+    response = TestClient(app).get("/sync")
+
+    assert response.status_code == 200
+    assert '<span class="idx-name">New</span>' in response.text
+    assert "Already synced (1):" in response.text
+    assert '<span class="idx-name">Kept</span>' in response.text
 
 
 def test_post_sync_apply_writes_config_and_confirms(tmp_path):

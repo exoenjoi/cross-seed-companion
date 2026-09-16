@@ -24,6 +24,7 @@ class SyncPreview:
     new_urls: list[str]
     added: list[str]
     removed: list[str]
+    unchanged: list[str]
     indexer_names: dict[int, str]
 
 
@@ -95,18 +96,28 @@ def _compute_diff_by_id(current_urls: list[str], new_urls: list[str]) -> tuple[l
     return added, removed
 
 
-def compute_sync_preview(prowlarr: ProwlarrClient, settings: Settings) -> SyncPreview:
-    config_text = read_config(_config_path(settings))
-    current_urls = extract_current_urls(config_text)
-    new_urls, indexer_names = _build_new_urls_and_names(prowlarr, settings)
+def _build_preview(
+    current_urls: list[str],
+    new_urls: list[str],
+    indexer_names: dict[int, str],
+) -> SyncPreview:
     added, removed = _compute_diff_by_id(current_urls, new_urls)
+    unchanged = [url for url in new_urls if url not in added]
     return SyncPreview(
         current_urls=current_urls,
         new_urls=new_urls,
         added=added,
         removed=removed,
+        unchanged=unchanged,
         indexer_names=indexer_names,
     )
+
+
+def compute_sync_preview(prowlarr: ProwlarrClient, settings: Settings) -> SyncPreview:
+    config_text = read_config(_config_path(settings))
+    current_urls = extract_current_urls(config_text)
+    new_urls, indexer_names = _build_new_urls_and_names(prowlarr, settings)
+    return _build_preview(current_urls, new_urls, indexer_names)
 
 
 def apply_sync(prowlarr: ProwlarrClient, settings: Settings) -> SyncPreview:
@@ -114,25 +125,12 @@ def apply_sync(prowlarr: ProwlarrClient, settings: Settings) -> SyncPreview:
     config_text = read_config(config_path)
     current_urls = extract_current_urls(config_text)
     new_urls, indexer_names = _build_new_urls_and_names(prowlarr, settings)
-    added, removed = _compute_diff_by_id(current_urls, new_urls)
 
     if new_urls == current_urls:
         # Nothing actually changed (true no-op) — skip the needless backup+write.
-        return SyncPreview(
-            current_urls=current_urls,
-            new_urls=new_urls,
-            added=added,
-            removed=removed,
-            indexer_names=indexer_names,
-        )
+        return _build_preview(current_urls, new_urls, indexer_names)
 
     backup_config(config_path)
     write_config(config_path, replace_torznab_block(config_text, new_urls))
 
-    return SyncPreview(
-        current_urls=current_urls,
-        new_urls=new_urls,
-        added=added,
-        removed=removed,
-        indexer_names=indexer_names,
-    )
+    return _build_preview(current_urls, new_urls, indexer_names)

@@ -61,6 +61,7 @@ def test_compute_sync_preview_reports_added_and_removed(tmp_path):
 
     assert preview.added == ["http://prowlarr:9696/3/api?apikey=new-key"]
     assert preview.removed == ["http://prowlarr:9696/2/api?apikey=old"]
+    assert preview.unchanged == ["http://prowlarr:9696/1/api?apikey=new-key"]
     # config.js reste inchangé après un simple preview
     assert "old" in config_path.read_text()
 

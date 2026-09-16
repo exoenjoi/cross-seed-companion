@@ -12,9 +12,11 @@
   {% for url in preview.added %}<tr><td class="added">{{ idx_cell(url, preview.indexer_names, "+") }}</td></tr>{% endfor %}
   {% for url in preview.removed %}<tr><td class="removed">{{ idx_cell(url, preview.indexer_names, "-") }}</td></tr>{% endfor %}
 </table>
-{% elif preview.current_urls %}
+{% endif %}
+{% if preview.unchanged %}
+<p class="meta">Already synced ({{ preview.unchanged | length }}):</p>
 <table class="diff">
-  {% for url in preview.current_urls %}<tr><td>{{ idx_cell(url, preview.indexer_names, "") }}</td></tr>{% endfor %}
+  {% for url in preview.unchanged %}<tr><td>{{ idx_cell(url, preview.indexer_names, "") }}</td></tr>{% endfor %}
 </table>
 {% endif %}
 {% if preview.current_urls == preview.new_urls %}
