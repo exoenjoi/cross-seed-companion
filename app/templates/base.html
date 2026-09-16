@@ -181,16 +181,21 @@
     }
     .action-row {
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.4rem;
       border: 1px solid var(--border);
       padding: 0.7rem 0.9rem;
     }
-    .action-row .action-title {
+    .action-row-main {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .action-row-main .action-title {
       flex: 1;
       font-size: 0.85rem;
     }
-    .action-row input[type="text"] {
+    .action-row-main input[type="text"] {
       font-family: var(--mono);
       font-size: 0.8rem;
       background: var(--bg-raised);
@@ -198,6 +203,12 @@
       color: var(--fg);
       padding: 0.4rem 0.6rem;
       border-radius: 3px;
+    }
+    .action-api {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--fg-dim);
+      overflow-wrap: anywhere;
     }
     .ping-badge {
       font-family: var(--mono);
@@ -221,6 +232,30 @@
       border-radius: 3px;
     }
     .log-filter { flex: 1; }
+    .log-level-filters {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .level-chip {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: transparent;
+      color: var(--fg-dim);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.6rem;
+      border-radius: 3px;
+      cursor: pointer;
+      opacity: 0.45;
+    }
+    .level-chip.active {
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      opacity: 1;
+    }
     .log-container {
       height: 60vh;
       overflow-y: auto;
@@ -252,6 +287,9 @@
       padding: 0.5rem 0;
       font-size: 0.85rem;
     }
+    .added-row[hidden] {
+      display: none;
+    }
     .added-name {
       overflow-wrap: anywhere;
     }
@@ -273,7 +311,7 @@
       main {
         padding: 1.5rem 1rem 3rem;
       }
-      .action-row {
+      .action-row-main {
         flex-direction: column;
         align-items: stretch;
       }

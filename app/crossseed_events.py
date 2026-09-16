@@ -8,6 +8,11 @@ MATCH_RE = re.compile(
     r"by MATCH from torrentClient \(.+?\) - (?P<outcome>.+)$"
 )
 
+# Any line MATCH_RE can possibly match contains this substring — used to
+# cheaply skip the vast majority of (irrelevant) log lines before the more
+# expensive per-line parsing in log_history.read_all_events.
+MATCH_MARKER = "by MATCH from torrentClient"
+
 # Only these two outcomes are genuine successful additions — verified against
 # a real ~15-day log corpus. Every other outcome ("failed to inject,
 # saving...", "exists", "source is incomplete, saving...", or anything
