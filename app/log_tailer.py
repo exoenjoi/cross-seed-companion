@@ -23,7 +23,7 @@ class LogTailer:
             self._file.close()
             self._file = None
         if target.exists():
-            self._file = target.open("r")
+            self._file = target.open("r", encoding="utf-8", errors="replace")
             if self._first_open:
                 self._file.seek(0, 2)  # fin de fichier : le backfill gère déjà l'historique
             self._target = target
@@ -67,6 +67,6 @@ def read_recent_entries(path: Path, max_entries: int = 200) -> list[LogEntry]:
     # s'avère anormalement gros.
     if not path.exists():
         return []
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     entries = parse_log_lines(lines)
     return entries[-max_entries:]
