@@ -191,6 +191,29 @@
     .log-component { color: var(--accent); margin-right: 0.4rem; }
     .log-line.log-level-error { color: var(--danger); }
     .log-line.log-level-verbose { color: var(--fg-dim); }
+    .added-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .added-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 0;
+      font-size: 0.85rem;
+    }
+    .added-name {
+      flex: 1;
+      word-break: break-all;
+    }
+    .added-meta {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -200,6 +223,7 @@
       <a href="/sync">Sync</a>
       <a href="/actions">Actions</a>
       <a href="/logs">Logs</a>
+      <a href="/added">Added</a>
     </nav>
   </header>
   <main>
