@@ -41,7 +41,7 @@ def actions_run(request: Request, action_id: str, input: str | None = Form(None)
         return templates.TemplateResponse(
             request,
             "_action_result.html",
-            {"ok": False, "message": f"Action inconnue : {action_id}"},
+            {"ok": False, "message": f"Unknown action: {action_id}"},
         )
 
     try:

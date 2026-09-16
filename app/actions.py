@@ -109,7 +109,7 @@ def _substitute(text: str, variables: dict[str, str]) -> str:
         name = match.group(1)
         if name not in variables:
             raise MissingActionVariableError(
-                f"Variable inconnue ou non fournie dans une action : ${{{name}}}"
+                f"Unknown or missing variable in an action: ${{{name}}}"
             )
         return variables[name]
 

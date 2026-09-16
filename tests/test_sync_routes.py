@@ -67,7 +67,8 @@ def test_get_sync_shows_indexer_name_next_to_url(tmp_path):
     response = client.get("/sync")
 
     assert response.status_code == 200
-    assert "The Old School — http://prowlarr:9696/2/api" in response.text
+    assert '<span class="idx-name">The Old School</span>' in response.text
+    assert "http://prowlarr:9696/2/api" in response.text
 
 
 def test_get_sync_masks_long_api_keys_in_diff_table(tmp_path):
@@ -96,7 +97,8 @@ def test_get_sync_lists_current_indexers_when_only_key_rotated(tmp_path):
     response = client.get("/sync")
 
     assert response.status_code == 200
-    assert "A — http://prowlarr:9696/1/api?apikey=old" in response.text
+    assert '<span class="idx-name">A</span>' in response.text
+    assert "http://prowlarr:9696/1/api?apikey=old" in response.text
 
 
 def test_post_sync_apply_writes_config_and_confirms(tmp_path):

@@ -11,3 +11,4 @@ __pycache__/
 .superpowers/
 PRODUCT.md
 docs/superpowers/
+.playwright-mcp/

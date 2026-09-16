@@ -1,6 +1,6 @@
 import time
 
-from app.crossseed_events import CrossSeedEvent, extract_events
+from app.crossseed_events import CrossSeedEvent, extract_events, group_events_by_name
 from app.log_parser import LogEntry
 
 
@@ -184,3 +184,25 @@ def test_extract_events_bounds_backtracking_on_adversarial_non_matching_line():
 
 def test_extract_events_returns_empty_list_for_no_entries():
     assert extract_events([]) == []
+
+
+def test_group_events_by_name_merges_same_torrent_across_trackers():
+    # Real-world shape: cross-seed injects the same torrent via multiple
+    # indexers, each producing its own event with an identical name.
+    events = [
+        CrossSeedEvent("2026-09-13 08:17:38.946", "Mickey.17.mkv", "TR4KER", "injected", "rss"),
+        CrossSeedEvent("2026-09-13 08:17:37.209", "Mickey.17.mkv", "G3mini (API)", "injected", "rss"),
+        CrossSeedEvent("2026-09-13 08:17:30.431", "Mickey.17.mkv", "TR4KER", "injected", "rss"),
+        CrossSeedEvent("2026-09-13 08:12:28.200", "Warfare.mkv", "TR4KER", "injected", "rss"),
+    ]
+
+    grouped = group_events_by_name(events)
+
+    assert [g.name for g in grouped] == ["Mickey.17.mkv", "Warfare.mkv"]
+    mickey = grouped[0]
+    assert mickey.timestamp == "2026-09-13 08:17:38.946"
+    assert mickey.trackers == ["TR4KER", "G3mini (API)"]
+
+
+def test_group_events_by_name_returns_empty_list_for_no_events():
+    assert group_events_by_name([]) == []
