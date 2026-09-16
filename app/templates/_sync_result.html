@@ -1,14 +1,23 @@
 {% macro idx_row(url, indexers_by_id, sign, row_class) %}
 {% set indexer = url | indexer_for(indexers_by_id) %}
 <tr{% if row_class %} class="{{ row_class }}"{% endif %}>
-  <td class="idx-name-cell">
+  <td class="idx-name-cell" data-sort="{{ indexer.name | lower if indexer else '' }}">
     {% if sign %}<span class="idx-sign">{{ sign }}</span>{% endif %}
     {% if indexer %}<span class="idx-name">{{ indexer.name }}</span>{% endif %}
   </td>
-  <td class="idx-privacy{% if indexer %} idx-privacy-{{ indexer.privacy | lower }}{% endif %}">{{ indexer.privacy if indexer else "" }}</td>
-  <td class="idx-id">{{ indexer.id if indexer else "" }}</td>
-  <td class="idx-added">{{ indexer.added[:10] if indexer and indexer.added else "" }}</td>
+  <td class="idx-privacy{% if indexer %} idx-privacy-{{ indexer.privacy | lower }}{% endif %}" data-sort="{{ indexer.privacy | lower if indexer else '' }}">{{ indexer.privacy if indexer else "" }}</td>
+  <td class="idx-id" data-sort="{{ indexer.id if indexer else -1 }}">{{ indexer.id if indexer else "" }}</td>
+  <td class="idx-added" data-sort="{{ indexer.added[:10] if indexer and indexer.added else '' }}">{{ indexer.added[:10] if indexer and indexer.added else "" }}</td>
   <td class="idx-url">{{ url | mask_api_key }}</td>
+</tr>
+{% endmacro %}
+{% macro sort_head() %}
+<tr>
+  <th class="sortable" data-sort-col="0" data-sort-type="text">Indexer</th>
+  <th class="sortable" data-sort-col="1" data-sort-type="text">Privacy</th>
+  <th class="sortable" data-sort-col="2" data-sort-type="num" data-sort-dir="desc">ID</th>
+  <th class="sortable" data-sort-col="3" data-sort-type="text">Added</th>
+  <th>URL</th>
 </tr>
 {% endmacro %}
 <p class="meta">
@@ -18,7 +27,7 @@
 <div class="table-scroll">
 <table class="diff">
   <thead>
-    <tr><th>Indexer</th><th>Privacy</th><th>ID</th><th>Added</th><th>URL</th></tr>
+    {{ sort_head() }}
   </thead>
   <tbody>
     {% for url in preview.added %}{{ idx_row(url, preview.indexers_by_id, "+", "added") }}{% endfor %}
@@ -32,7 +41,7 @@
 <div class="table-scroll">
 <table class="diff">
   <thead>
-    <tr><th>Indexer</th><th>Privacy</th><th>ID</th><th>Added</th><th>URL</th></tr>
+    {{ sort_head() }}
   </thead>
   <tbody>
     {% for url in preview.unchanged %}{{ idx_row(url, preview.indexers_by_id, "", "") }}{% endfor %}
@@ -40,6 +49,38 @@
 </table>
 </div>
 {% endif %}
+<script>
+(function () {
+  function cellValue(row, col, type) {
+    var raw = row.children[col].dataset.sort;
+    if (raw === undefined) raw = row.children[col].textContent.trim().toLowerCase();
+    return type === "num" ? parseFloat(raw) : raw;
+  }
+  function sortTable(table, col, type, dir) {
+    var tbody = table.tBodies[0];
+    var rows = Array.prototype.slice.call(tbody.rows);
+    rows.sort(function (a, b) {
+      var va = cellValue(a, col, type), vb = cellValue(b, col, type);
+      if (va < vb) return dir === "asc" ? -1 : 1;
+      if (va > vb) return dir === "asc" ? 1 : -1;
+      return 0;
+    });
+    rows.forEach(function (row) { tbody.appendChild(row); });
+  }
+  document.querySelectorAll("#sync-result table.diff").forEach(function (table) {
+    var headers = table.querySelectorAll("th.sortable");
+    headers.forEach(function (th) {
+      th.addEventListener("click", function () {
+        var dir = th.dataset.sortDir === "asc" ? "desc" : "asc";
+        headers.forEach(function (h) { delete h.dataset.sortDir; });
+        th.dataset.sortDir = dir;
+        sortTable(table, parseInt(th.dataset.sortCol, 10), th.dataset.sortType, dir);
+      });
+    });
+    sortTable(table, 2, "num", "desc"); // default: ID desc
+  });
+})();
+</script>
 {% if preview.current_urls == preview.new_urls %}
   <p class="notice">Already in sync, nothing to do.</p>
 {% elif applied %}
