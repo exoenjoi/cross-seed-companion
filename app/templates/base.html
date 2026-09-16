@@ -85,42 +85,57 @@
       font-weight: 600;
       margin: 0 0 1.75rem;
     }
+    .table-scroll {
+      overflow-x: auto;
+    }
     table.diff {
       width: 100%;
       border-collapse: collapse;
       font-family: var(--mono);
       font-size: 0.82rem;
     }
+    table.diff th {
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-dim);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
     table.diff td {
       padding: 0.45rem 0.6rem;
       border-bottom: 1px solid var(--border);
-      word-break: break-all;
+      white-space: nowrap;
     }
-    td.added { color: var(--accent); }
-    td.removed { color: var(--fg-dim); text-decoration: line-through; }
+    tr.added td { color: var(--accent); }
+    tr.removed td { color: var(--fg-dim); text-decoration: line-through; }
     .idx-sign {
       display: inline-block;
       width: 1em;
     }
     .idx-name {
-      display: block;
       font-family: var(--sans);
       font-weight: 600;
     }
-    .idx-url {
-      display: block;
+    .idx-privacy {
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--fg-dim);
+    }
+    .idx-privacy-public { color: var(--danger); }
+    .idx-privacy-semiprivate { color: var(--accent); }
+    .idx-id, .idx-added {
       color: var(--fg-dim);
       font-size: 0.78rem;
-      margin-top: 0.1rem;
     }
-    .idx-meta {
-      display: block;
-      font-family: var(--mono);
+    .idx-url {
       color: var(--fg-dim);
-      font-size: 0.72rem;
-      margin-top: 0.1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
+      font-size: 0.78rem;
     }
     .meta {
       color: var(--fg-dim);
