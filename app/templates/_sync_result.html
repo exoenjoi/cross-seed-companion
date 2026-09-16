@@ -1,22 +1,23 @@
-{% macro idx_cell(url, indexer_names, sign) %}
-{% set name = url | indexer_name(indexer_names) %}
+{% macro idx_cell(url, indexers_by_id, sign) %}
+{% set indexer = url | indexer_for(indexers_by_id) %}
 {% if sign %}<span class="idx-sign">{{ sign }}</span>{% endif %}
-{% if name %}<span class="idx-name">{{ name }}</span>{% endif %}
+{% if indexer %}<span class="idx-name">{{ indexer.name }}</span>{% endif %}
 <span class="idx-url">{{ url | mask_api_key }}</span>
+{% if indexer %}<span class="idx-meta">ID {{ indexer.id }} · {{ indexer.privacy }}{% if indexer.added %} · added {{ indexer.added[:10] }}{% endif %}</span>{% endif %}
 {% endmacro %}
 <p class="meta">
   {{ preview.current_urls | length }} indexer(s) currently — {{ preview.new_urls | length }} after sync
 </p>
 {% if preview.added or preview.removed %}
 <table class="diff">
-  {% for url in preview.added %}<tr><td class="added">{{ idx_cell(url, preview.indexer_names, "+") }}</td></tr>{% endfor %}
-  {% for url in preview.removed %}<tr><td class="removed">{{ idx_cell(url, preview.indexer_names, "-") }}</td></tr>{% endfor %}
+  {% for url in preview.added %}<tr><td class="added">{{ idx_cell(url, preview.indexers_by_id, "+") }}</td></tr>{% endfor %}
+  {% for url in preview.removed %}<tr><td class="removed">{{ idx_cell(url, preview.indexers_by_id, "-") }}</td></tr>{% endfor %}
 </table>
 {% endif %}
 {% if preview.unchanged %}
 <p class="meta">Already synced ({{ preview.unchanged | length }}):</p>
 <table class="diff">
-  {% for url in preview.unchanged %}<tr><td>{{ idx_cell(url, preview.indexer_names, "") }}</td></tr>{% endfor %}
+  {% for url in preview.unchanged %}<tr><td>{{ idx_cell(url, preview.indexers_by_id, "") }}</td></tr>{% endfor %}
 </table>
 {% endif %}
 {% if preview.current_urls == preview.new_urls %}

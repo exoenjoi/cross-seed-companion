@@ -10,6 +10,7 @@ class Indexer:
     enable: bool
     privacy: str
     tags: list[int]
+    added: str = ""
 
 
 @dataclass
@@ -42,6 +43,7 @@ class ProwlarrClient:
                 enable=item["enable"],
                 privacy=item["privacy"],
                 tags=item.get("tags", []),
+                added=item.get("added", ""),
             )
             for item in response.json()
         ]

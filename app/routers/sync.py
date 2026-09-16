@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from app.crossseed_config import TorznabBlockError
+from app.prowlarr import Indexer
 from app.sync_service import apply_sync, compute_sync_preview, extract_indexer_id
 
 router = APIRouter()
@@ -14,9 +15,9 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 _API_KEY_RE = re.compile(r"(apikey=)([^&]+)")
 
 
-def _indexer_name(url: str, indexer_names: dict[int, str]) -> str | None:
+def _indexer_for(url: str, indexers_by_id: dict[int, Indexer]) -> Indexer | None:
     indexer_id = extract_indexer_id(url)
-    return indexer_names.get(indexer_id) if indexer_id is not None else None
+    return indexers_by_id.get(indexer_id) if indexer_id is not None else None
 
 
 def _mask_api_key(url: str) -> str:
@@ -31,7 +32,7 @@ def _mask_api_key(url: str) -> str:
     return _API_KEY_RE.sub(_mask, url)
 
 
-templates.env.filters["indexer_name"] = _indexer_name
+templates.env.filters["indexer_for"] = _indexer_for
 templates.env.filters["mask_api_key"] = _mask_api_key
 
 
