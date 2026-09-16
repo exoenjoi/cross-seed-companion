@@ -27,7 +27,7 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 
 ## Features
 
-**Phase 1, 2 & 3 (shipped):**
+**Phase 1-4 (shipped):**
 
 - **Indexer sync** — pulls your enabled indexers from Prowlarr and writes them into
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
@@ -43,11 +43,13 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   whitelist-only variable substitution.
 - **Real-time logs** — a `/logs` page streams cross-seed's `verbose.current.log`
   live over Server-Sent Events, with a short backfill on load and a client-side
-  text filter. v1 shows only the current day's log (no browsing older rotated
+  text filter. Shows only the current day's log (no browsing older rotated
   files yet — see Roadmap).
-
-**Planned (not yet built — see [Roadmap](#roadmap)):** a list of recently
-cross-seeded torrents.
+- **Added torrents** — a `/added` page lists torrents cross-seed has actually
+  added to your torrent client (name, source tracker, date), parsed from
+  every available `verbose.*.log` file — no qBittorrent connection needed.
+  Only lines cross-seed itself marks as a genuine success count; injection
+  failures and "already exists" lines are excluded.
 
 ## Architecture
 
@@ -113,16 +115,14 @@ driven by user-supplied configuration.
 
 ## Roadmap
 
-Phases 1 (indexer sync), 2 (declarative actions) and 3 (real-time logs) are
-done. One more phase is planned:
+Phases 1 (indexer sync), 2 (declarative actions), 3 (real-time logs) and 4
+(added-torrents list) are done. No further phase is currently planned.
 
-4. A list of torrents cross-seed has actually cross-seeded, parsed from its
-   logs, without requiring a qBittorrent connection.
-
-Browsing older, already-rotated log files (beyond the current day shown by
-Phase 3) is a plausible future addition — the log parser was deliberately
-kept independent of the live-tailing code so it could be reused for that
-without a rewrite.
+Browsing older, already-rotated log files on the `/logs` page itself (right
+now only `/added` reads them; `/logs`'s live view still shows only the
+current day) is a plausible future addition — the log parser was
+deliberately kept independent of the live-tailing code so it could be
+reused for that without a rewrite.
 
 ## Contributing
 
