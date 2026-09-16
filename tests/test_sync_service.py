@@ -66,12 +66,12 @@ def test_compute_sync_preview_reports_added_and_removed(tmp_path):
     assert "old" in config_path.read_text()
 
 
-def test_compute_sync_preview_exposes_indexer_names_by_id(tmp_path):
+def test_compute_sync_preview_exposes_indexers_by_id(tmp_path):
     config_path = _write_config(tmp_path, existing_ids=[1, 2])
     prowlarr = FakeProwlarr(
         indexers=[
-            Indexer(id=1, name="A", enable=True, privacy="private", tags=[]),
-            Indexer(id=3, name="B", enable=True, privacy="private", tags=[]),
+            Indexer(id=1, name="A", enable=True, privacy="private", tags=[], added="2025-12-28T00:00:00Z"),
+            Indexer(id=3, name="B", enable=True, privacy="public", tags=[]),
         ],
         tags=[],
     )
@@ -79,7 +79,10 @@ def test_compute_sync_preview_exposes_indexer_names_by_id(tmp_path):
 
     preview = compute_sync_preview(prowlarr, settings)
 
-    assert preview.indexer_names == {1: "A", 3: "B"}
+    assert {k: (v.name, v.privacy, v.added) for k, v in preview.indexers_by_id.items()} == {
+        1: ("A", "private", "2025-12-28T00:00:00Z"),
+        3: ("B", "public", ""),
+    }
 
 
 def test_apply_sync_writes_backup_and_new_config(tmp_path):

@@ -71,6 +71,22 @@ def test_get_sync_shows_indexer_name_next_to_url(tmp_path):
     assert "http://prowlarr:9696/2/api" in response.text
 
 
+def test_get_sync_shows_id_privacy_and_added_date_next_to_indexer(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[
+            Indexer(id=2, name="B", enable=True, privacy="private", tags=[], added="2025-12-28T10:15:00Z")
+        ],
+    )
+
+    response = client.get("/sync")
+
+    assert response.status_code == 200
+    assert "ID 2" in response.text
+    assert "private" in response.text
+    assert "added 2025-12-28" in response.text
+
+
 def test_get_sync_masks_long_api_keys_in_diff_table(tmp_path):
     client = _client(
         tmp_path,
