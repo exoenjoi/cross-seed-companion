@@ -4,22 +4,7 @@
 <span class="section-tag">04 · Added</span>
 <h1 class="page-title">Torrents added by cross-seed</h1>
 
-{% if not events %}
-<p class="meta">No additions found in the available logs.</p>
-{% else %}
-<p class="meta">{{ events | length }} torrent(s) added</p>
-{% endif %}
-
-<div class="added-list">
-  {% for event in events %}
-  <div class="added-row">
-    <span class="added-name">{{ event.name }}</span>
-    <span class="added-meta">
-      <span class="log-time">{{ event.timestamp }}</span>
-      <span class="log-tag">{{ event.outcome }}</span>
-      <span class="log-component">{{ event.tracker }}</span>
-    </span>
-  </div>
-  {% endfor %}
+<div id="added-content" hx-get="/added/refresh" hx-trigger="every 30s" hx-swap="innerHTML">
+  {% include "_added_list.html" %}
 </div>
 {% endblock %}

@@ -1,0 +1,17 @@
+{% if not grouped %}
+<p class="meta">No additions found in the available logs.</p>
+{% else %}
+<p class="meta">{{ grouped | length }} torrent(s) added</p>
+<div class="added-list">
+  {% for event in grouped %}
+  <div class="added-row">
+    <span class="added-name">{{ event.name }}</span>
+    <span class="added-meta">
+      <span class="log-time">{{ event.timestamp }}</span>
+      <span class="log-tag">{{ event.outcome }}</span>
+      <span class="log-component">{{ event.trackers | join(", ") }}</span>
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

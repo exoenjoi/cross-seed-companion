@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cross-Seed Companion</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%23f5a623%22/></svg>">
   <script src="/static/vendor/htmx.min.js"></script>
   <style>
     :root {
@@ -72,6 +73,21 @@
     }
     td.added { color: var(--accent); }
     td.removed { color: var(--fg-dim); text-decoration: line-through; }
+    .idx-sign {
+      display: inline-block;
+      width: 1em;
+    }
+    .idx-name {
+      display: block;
+      font-family: var(--sans);
+      font-weight: 600;
+    }
+    .idx-url {
+      display: block;
+      color: var(--fg-dim);
+      font-size: 0.78rem;
+      margin-top: 0.1rem;
+    }
     .meta {
       color: var(--fg-dim);
       font-family: var(--mono);
@@ -202,21 +218,19 @@
     }
     .added-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.2rem;
       border-bottom: 1px solid var(--border);
       padding: 0.5rem 0;
       font-size: 0.85rem;
     }
     .added-name {
-      flex: 1;
-      word-break: break-all;
+      overflow-wrap: anywhere;
     }
     .added-meta {
       font-family: var(--mono);
       font-size: 0.78rem;
-      white-space: nowrap;
+      color: var(--fg-dim);
     }
   </style>
 </head>
