@@ -105,6 +105,7 @@ Everything is configured through environment variables.
 | `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
 | `ACTIONS_CONFIG_PATH` | no | Path to an optional custom actions YAML file (see `examples/custom-actions.example.yml`) |
 | `CROSSSEED_LOGS_PATH` | no | Path to cross-seed's `logs/` directory, if mounted separately (defaults to `CROSSSEED_CONFIG_PATH/logs`) |
+| `PUID` / `PGID` | no | UID/GID the container runs as (default: `1000`/`1000`, never root). Set these to whatever owns your cross-seed config directory on the host (`id -u`/`id -g`), or writes to it (backups, sync) will fail with `Permission denied` |
 
 ## Security
 

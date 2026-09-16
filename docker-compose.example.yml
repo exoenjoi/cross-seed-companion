@@ -5,6 +5,11 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Match the UID:GID that owns the cross-seed config directory on the
+      # host (run `id -u`/`id -g` there) so the container can write config.js
+      # and its backups. Defaults to 1000:1000 (non-root) if unset.
+      PUID: "1000"
+      PGID: "1000"
       PROWLARR_URL: "http://prowlarr:9696"
       PROWLARR_API_KEY: "changeme"
       # Required at startup and used by the Phase 2 actions feature
