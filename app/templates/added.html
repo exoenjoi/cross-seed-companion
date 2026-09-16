@@ -6,7 +6,9 @@
 
 <div class="log-controls">
   <input type="text" id="added-search" class="log-filter" placeholder="Search by name...">
-  <input type="date" id="added-date" class="log-day-select">
+  <select id="added-date" class="log-day-select">
+    <option value="">All dates</option>
+  </select>
 </div>
 
 <div id="added-content" hx-get="/added/refresh" hx-trigger="every 30s" hx-swap="innerHTML">
@@ -20,6 +22,19 @@
     var searchInput = document.getElementById("added-search");
     var dateInput = document.getElementById("added-date");
     var emptyNotice = document.getElementById("added-filter-empty");
+
+    function refreshDateOptions() {
+      var current = dateInput.value;
+      var dates = new Set();
+      container.querySelectorAll(".added-row .log-time").forEach(function (timeEl) {
+        dates.add(timeEl.textContent.trim().slice(0, 10));
+      });
+      var sorted = Array.from(dates).sort().reverse();
+      dateInput.innerHTML = '<option value="">All dates</option>' + sorted.map(function (d) {
+        return '<option value="' + d + '">' + d + "</option>";
+      }).join("");
+      dateInput.value = sorted.indexOf(current) !== -1 ? current : "";
+    }
 
     function applyFilter() {
       var needle = searchInput.value.trim().toLowerCase();
@@ -38,10 +53,14 @@
     }
 
     searchInput.addEventListener("input", applyFilter);
-    dateInput.addEventListener("input", applyFilter);
+    dateInput.addEventListener("change", applyFilter);
     document.body.addEventListener("htmx:afterSwap", function (event) {
-      if (event.target && event.target.id === "added-content") applyFilter();
+      if (event.target && event.target.id === "added-content") {
+        refreshDateOptions();
+        applyFilter();
+      }
     });
+    refreshDateOptions();
     applyFilter();
   })();
 </script>
