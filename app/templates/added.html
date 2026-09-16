@@ -4,7 +4,45 @@
 <span class="section-tag">04 · Added</span>
 <h1 class="page-title">Torrents added by cross-seed</h1>
 
+<div class="log-controls">
+  <input type="text" id="added-search" class="log-filter" placeholder="Search by name...">
+  <input type="date" id="added-date" class="log-day-select">
+</div>
+
 <div id="added-content" hx-get="/added/refresh" hx-trigger="every 30s" hx-swap="innerHTML">
   {% include "_added_list.html" %}
 </div>
+<p id="added-filter-empty" class="meta" hidden>No matches.</p>
+
+<script>
+  (function () {
+    var container = document.getElementById("added-content");
+    var searchInput = document.getElementById("added-search");
+    var dateInput = document.getElementById("added-date");
+    var emptyNotice = document.getElementById("added-filter-empty");
+
+    function applyFilter() {
+      var needle = searchInput.value.trim().toLowerCase();
+      var day = dateInput.value;
+      var rows = container.querySelectorAll(".added-row");
+      var visibleCount = 0;
+      rows.forEach(function (row) {
+        var name = row.querySelector(".added-name").textContent.toLowerCase();
+        var rowDay = row.querySelector(".log-time").textContent.trim().slice(0, 10);
+        var matchesName = needle === "" || name.includes(needle);
+        var matchesDay = day === "" || rowDay === day;
+        row.hidden = !(matchesName && matchesDay);
+        if (!row.hidden) visibleCount++;
+      });
+      emptyNotice.hidden = !(rows.length > 0 && visibleCount === 0);
+    }
+
+    searchInput.addEventListener("input", applyFilter);
+    dateInput.addEventListener("input", applyFilter);
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+      if (event.target && event.target.id === "added-content") applyFilter();
+    });
+    applyFilter();
+  })();
+</script>
 {% endblock %}

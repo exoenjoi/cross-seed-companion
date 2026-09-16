@@ -15,6 +15,7 @@
   </select>
   <input type="text" id="log-filter" class="log-filter" placeholder="Filter...">
 </div>
+<div id="log-level-filters" class="log-level-filters"></div>
 
 <div id="log-container" class="log-container">
   {% if entries %}
@@ -32,20 +33,52 @@
     var container = document.getElementById("log-container");
     var filterInput = document.getElementById("log-filter");
     var daySelect = document.getElementById("log-day-select");
+    var levelFilters = document.getElementById("log-level-filters");
     var isCurrent = {{ "true" if selected_day == "current" else "false" }};
 
     var emptyNotice = document.getElementById("log-filter-empty");
+    var disabledLevels = new Set();
+
+    function lineLevel(line) {
+      var match = /log-level-(\S+)/.exec(line.className);
+      return match ? match[1] : "";
+    }
+
+    function ensureChip(level) {
+      if (!level || levelFilters.querySelector('[data-level="' + level + '"]')) return;
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "level-chip active";
+      chip.dataset.level = level;
+      chip.textContent = level;
+      chip.addEventListener("click", function () {
+        chip.classList.toggle("active");
+        if (chip.classList.contains("active")) {
+          disabledLevels.delete(level);
+        } else {
+          disabledLevels.add(level);
+        }
+        applyFilter();
+      });
+      levelFilters.appendChild(chip);
+    }
 
     function applyFilter() {
       var needle = filterInput.value.toLowerCase();
       var lines = container.querySelectorAll(".log-line");
       var visibleCount = 0;
       lines.forEach(function (line) {
-        line.hidden = needle !== "" && !line.textContent.toLowerCase().includes(needle);
+        var matchesText = needle === "" || line.textContent.toLowerCase().includes(needle);
+        var matchesLevel = !disabledLevels.has(lineLevel(line));
+        line.hidden = !(matchesText && matchesLevel);
         if (!line.hidden) visibleCount++;
       });
       emptyNotice.hidden = !(lines.length > 0 && visibleCount === 0);
     }
+
+    container.querySelectorAll(".log-line").forEach(function (line) {
+      ensureChip(lineLevel(line));
+    });
     filterInput.addEventListener("input", applyFilter);
 
     daySelect.addEventListener("change", function () {
@@ -66,6 +99,7 @@
         var placeholder = container.querySelector(".meta");
         if (placeholder) placeholder.remove();
         container.insertAdjacentHTML("beforeend", event.data);
+        ensureChip(lineLevel(container.lastElementChild));
         applyFilter();
         if (stickToBottom) {
           container.scrollTop = container.scrollHeight;

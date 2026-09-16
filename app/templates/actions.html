@@ -14,11 +14,14 @@
         hx-target="#action-result"
         hx-disabled-elt="find button"
         {% if action.confirm %}hx-confirm="{{ action.confirm }}"{% endif %}>
-    <span class="action-title">{{ action.title }}</span>
-    {% if action.input_label %}
-    <input type="text" name="input" placeholder="{{ action.input_label }}" required>
-    {% endif %}
-    <button type="submit">Run</button>
+    <div class="action-row-main">
+      <span class="action-title">{{ action.title }}</span>
+      {% if action.input_label %}
+      <input type="text" name="input" placeholder="{{ action.input_label }}" required>
+      {% endif %}
+      <button type="submit">Run</button>
+    </div>
+    <div class="action-api">{{ action.url | api_endpoint }}{% if action.body %} · {{ action.body | json_compact }}{% endif %}</div>
   </form>
   {% endfor %}
 </div>

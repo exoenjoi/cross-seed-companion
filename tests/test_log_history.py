@@ -77,6 +77,27 @@ def test_read_all_events_returns_empty_list_when_dir_missing(tmp_path):
     assert read_all_events(tmp_path / "missing") == []
 
 
+def test_read_all_events_ignores_surrounding_noise_lines(tmp_path):
+    """Guards the line pre-filter added for performance: unrelated log lines
+    (including ones that don't start with a timestamp) around a real MATCH
+    line must not suppress or corrupt it."""
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    day1.write_text(
+        "2026-09-14 09:00:00.000 verbose: [rss] polling indexer feed\n"
+        "  continuation line with no timestamp\n"
+        "2026-09-14 09:05:00.000 error: [rss] some unrelated error\n"
+    )
+    _write_match_line(day1, "2026-09-14 10:00:00.000", "Movie.One", "TrackerA")
+    with day1.open("a") as f:
+        f.write("2026-09-14 10:05:00.000 verbose: [http] more unrelated noise\n")
+
+    events = read_all_events(logs_dir)
+
+    assert [event.name for event in events] == ["Movie.One"]
+
+
 def test_read_all_events_tolerates_invalid_utf8_in_one_file(tmp_path):
     logs_dir = tmp_path / "logs"
     logs_dir.mkdir()

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.crossseed_events import CrossSeedEvent, extract_events
+from app.crossseed_events import MATCH_MARKER, CrossSeedEvent, extract_events
 from app.log_paths import CURRENT_LOG_FILENAME
 from app.log_parser import LogEntry, parse_log_lines
 
@@ -38,7 +38,8 @@ def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEven
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             continue
-        entries = parse_log_lines(lines)
+        candidate_lines = [line for line in lines if MATCH_MARKER in line]
+        entries = parse_log_lines(candidate_lines)
         events.extend(extract_events(entries))
     events.sort(key=lambda event: event.timestamp, reverse=True)
     return events[:max_events]

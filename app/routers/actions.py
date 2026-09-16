@@ -1,3 +1,5 @@
+import json
+import re
 from pathlib import Path
 
 import httpx
@@ -9,6 +11,17 @@ from app.actions import ActionConfigError, MissingActionVariableError, find_acti
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
+templates.env.filters["json_compact"] = lambda value: json.dumps(value, ensure_ascii=False)
+
+_API_ENDPOINT_RE = re.compile(r"/api/([^/?]+)")
+
+
+def _api_endpoint(url: str) -> str:
+    match = _API_ENDPOINT_RE.search(url)
+    return match.group(1) if match else ""
+
+
+templates.env.filters["api_endpoint"] = _api_endpoint
 
 
 @router.get("/actions")
