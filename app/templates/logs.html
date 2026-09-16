@@ -17,10 +17,15 @@
 </div>
 
 <div id="log-container" class="log-container">
-  {% for entry in entries %}
-    {% include "_log_line.html" %}
-  {% endfor %}
+  {% if entries %}
+    {% for entry in entries %}
+      {% include "_log_line.html" %}
+    {% endfor %}
+  {% else %}
+    <p class="meta">No log entries for this day.</p>
+  {% endif %}
 </div>
+<p id="log-filter-empty" class="meta" hidden>No log lines match the filter.</p>
 
 <script>
   (function () {
@@ -29,11 +34,17 @@
     var daySelect = document.getElementById("log-day-select");
     var isCurrent = {{ "true" if selected_day == "current" else "false" }};
 
+    var emptyNotice = document.getElementById("log-filter-empty");
+
     function applyFilter() {
       var needle = filterInput.value.toLowerCase();
-      container.querySelectorAll(".log-line").forEach(function (line) {
+      var lines = container.querySelectorAll(".log-line");
+      var visibleCount = 0;
+      lines.forEach(function (line) {
         line.hidden = needle !== "" && !line.textContent.toLowerCase().includes(needle);
+        if (!line.hidden) visibleCount++;
       });
+      emptyNotice.hidden = !(lines.length > 0 && visibleCount === 0);
     }
     filterInput.addEventListener("input", applyFilter);
 
@@ -52,6 +63,8 @@
       var source = new EventSource("/logs/stream");
       source.onmessage = function (event) {
         var stickToBottom = isScrolledToBottom();
+        var placeholder = container.querySelector(".meta");
+        if (placeholder) placeholder.remove();
         container.insertAdjacentHTML("beforeend", event.data);
         applyFilter();
         if (stickToBottom) {

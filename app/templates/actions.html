@@ -3,7 +3,7 @@
 <span class="section-tag">02 · Actions</span>
 <h1 class="page-title">Actions cross-seed</h1>
 
-<div id="ping-badge" hx-get="/actions/ping" hx-trigger="load, every 15s" hx-swap="innerHTML">
+<div id="ping-badge" aria-live="polite" hx-get="/actions/ping" hx-trigger="load, every 15s" hx-swap="innerHTML">
   {% include "_ping_badge.html" %}
 </div>
 
@@ -12,6 +12,7 @@
   <form class="action-row"
         hx-post="/actions/{{ action.id }}/run"
         hx-target="#action-result"
+        hx-disabled-elt="find button"
         {% if action.confirm %}hx-confirm="{{ action.confirm }}"{% endif %}>
     <span class="action-title">{{ action.title }}</span>
     {% if action.input_label %}
@@ -22,5 +23,5 @@
   {% endfor %}
 </div>
 
-<div id="action-result" style="margin-top: 1.5rem;"></div>
+<div id="action-result" aria-live="polite" style="margin-top: 1.5rem;"></div>
 {% endblock %}
