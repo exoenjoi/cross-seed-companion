@@ -1,0 +1,23 @@
+{# app/templates/added.html #}
+{% extends "base.html" %}
+{% block content %}
+<span class="section-tag">04 · Added</span>
+<h1 class="page-title">Torrents ajoutés par cross-seed</h1>
+
+{% if not events %}
+<p class="meta">Aucun ajout trouvé dans les logs disponibles.</p>
+{% endif %}
+
+<div class="added-list">
+  {% for event in events %}
+  <div class="added-row">
+    <span class="added-name">{{ event.name }}</span>
+    <span class="added-meta">
+      <span class="log-time">{{ event.timestamp }}</span>
+      <span class="log-tag">{{ event.outcome }}</span>
+      <span class="log-component">{{ event.tracker }}</span>
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
