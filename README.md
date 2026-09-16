@@ -27,8 +27,6 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 
 ## Features
 
-**Phase 1-4 (shipped):**
-
 - **Indexer sync** — pulls your enabled indexers from Prowlarr and writes them into
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
   and a timestamped backup before any write. Optionally exclude public trackers
@@ -64,7 +62,8 @@ Docker host as cross-seed**, reading and writing cross-seed's config through a
 bind mount — never over SSH, never through the Docker socket:
 
 - cross-seed's `config.js` is mounted read-write (needed for the sync feature).
-- cross-seed's `logs/` directory will be mounted read-only for a future phase.
+- cross-seed's `logs/` directory is mounted read-only (used by the live log
+  viewer and the added-torrents list).
 - cross-seed's internal SQLite database (`cross-seed.db`) is never touched —
   its schema isn't a stable public contract, unlike the logs and config file.
 
@@ -96,12 +95,11 @@ Everything is configured through environment variables.
 |---|---|---|
 | `PROWLARR_URL` | yes | Prowlarr's base URL |
 | `PROWLARR_API_KEY` | yes | Prowlarr API key |
-| `CROSSSEED_URL` | yes | cross-seed daemon's base URL (used by Phase 2 declarative actions) |
-| `CROSSSEED_API_KEY` | yes | cross-seed API key (used by Phase 2 declarative actions) |
+| `CROSSSEED_URL` | yes | cross-seed daemon's base URL (used by the declarative actions feature) |
+| `CROSSSEED_API_KEY` | yes | cross-seed API key (used by the declarative actions feature) |
 | `CROSSSEED_CONFIG_PATH` | yes | Path (bind mount) to cross-seed's config directory |
 | `SYNC_EXCLUDE_PUBLIC` | no | Exclude public-tracker indexers from the sync (default: `false`) |
 | `SYNC_EXCLUDE_TAG` | no | Name of a Prowlarr tag; indexers carrying it are excluded from the sync |
-| `SYNC_INTERVAL_MINUTES` | no | **Not implemented yet** — reserved for a future phase, currently has no effect |
 | `DOCKER_MANAGER_URL` | no | Link shown after a sync to your Docker management tool |
 | `ACTIONS_CONFIG_PATH` | no | Path to an optional custom actions YAML file (see `examples/custom-actions.example.yml`) |
 | `CROSSSEED_LOGS_PATH` | no | Path to cross-seed's `logs/` directory, if mounted separately (defaults to `CROSSSEED_CONFIG_PATH/logs`) |
@@ -121,8 +119,9 @@ driven by user-supplied configuration.
 
 ## Roadmap
 
-Phases 1 (indexer sync), 2 (declarative actions), 3 (real-time logs) and 4
-(added-torrents list) are done. No further phase is currently planned.
+All planned features are shipped. No scheduled/automatic sync is planned —
+CSC never restarts cross-seed itself (see [Architecture](#architecture)), so
+a periodic sync without a restart to apply it wouldn't actually do anything.
 
 Browsing older, already-rotated log files on the `/logs` page itself (right
 now only `/added` reads them; `/logs`'s live view still shows only the
