@@ -8,7 +8,7 @@ _MAP_CALL_RE = re.compile(r"\s*\.map\s*\(")
 
 
 class TorznabBlockError(Exception):
-    """Levée quand le bloc 'torznab:' de config.js ne peut pas être repéré sans ambiguïté."""
+    """Raised when the 'torznab:' block in config.js cannot be located unambiguously."""
 
 
 def _skip_string(text: str, pos: int) -> int:
@@ -21,7 +21,7 @@ def _skip_string(text: str, pos: int) -> int:
         if text[i] == quote:
             return i + 1
         i += 1
-    raise TorznabBlockError("Chaîne de caractères non terminée dans config.js.")
+    raise TorznabBlockError("Unterminated string literal in config.js.")
 
 
 def _skip_line_comment(text: str, pos: int) -> int:
@@ -39,7 +39,7 @@ def _skip_block_comment(text: str, pos: int) -> int:
         if text[i:i+2] == "*/":
             return i + 2
         i += 1
-    raise TorznabBlockError("Commentaire non terminé (/* sans */) dans config.js.")
+    raise TorznabBlockError("Unterminated comment (/* without */) in config.js.")
 
 
 def _find_matching(text: str, open_pos: int, open_ch: str, close_ch: str) -> int:
@@ -65,7 +65,7 @@ def _find_matching(text: str, open_pos: int, open_ch: str, close_ch: str) -> int
             if depth == 0:
                 return i + 1
         i += 1
-    raise TorznabBlockError(f"'{open_ch}' non refermé dans config.js.")
+    raise TorznabBlockError(f"'{open_ch}' not closed in config.js.")
 
 
 def _mask_comments_and_strings(text: str) -> str:
@@ -95,12 +95,12 @@ def find_torznab_block(config_text: str) -> tuple[int, int]:
     matches = list(_TORZNAB_KEY_RE.finditer(masked_text))
     if len(matches) != 1:
         raise TorznabBlockError(
-            f"'torznab:' doit apparaître exactement une fois dans config.js "
-            f"(trouvé {len(matches)} fois). Abandon sans rien écrire."
+            f"'torznab:' must appear exactly once in config.js "
+            f"(found {len(matches)} times). Aborting without writing anything."
         )
     array_start = matches[0].end()
     if array_start >= len(config_text) or config_text[array_start] != "[":
-        raise TorznabBlockError("'torznab:' doit être suivi d'un tableau '['.")
+        raise TorznabBlockError("'torznab:' must be followed by an array '['.")
 
     array_end = _find_matching(config_text, array_start, "[", "]")
     end = array_end

@@ -4,9 +4,9 @@ from app.log_parser import ENTRY_RE, LogEntry, parse_log_lines
 
 
 class LogTailer:
-    """Tail un fichier de log accessible via un symlink dont la cible peut changer
-    (rotation quotidienne de cross-seed). Ne rejoue jamais le contenu déjà présent
-    au premier open — seules les lignes ajoutées ensuite sont retournées."""
+    """Tails a log file accessed via a symlink whose target can change
+    (cross-seed's daily rotation). Never replays content already present
+    at first open — only lines appended afterward are returned."""
 
     def __init__(self, symlink_path: Path) -> None:
         self._symlink_path = symlink_path
@@ -25,7 +25,7 @@ class LogTailer:
         if target.exists():
             self._file = target.open("r", encoding="utf-8", errors="replace")
             if self._first_open:
-                self._file.seek(0, 2)  # fin de fichier : le backfill gère déjà l'historique
+                self._file.seek(0, 2)  # end of file: backfill already covers the history
             self._target = target
             self._first_open = False
         return True
@@ -62,9 +62,9 @@ class LogTailer:
 
 
 def read_recent_entries(path: Path, max_entries: int = 200) -> list[LogEntry]:
-    # ponytail: lit tout le fichier courant (un jour de logs) plutôt que de faire
-    # un seek par octets depuis la fin ; à revisiter si un fichier journalier
-    # s'avère anormalement gros.
+    # ponytail: reads the whole current file (one day of logs) instead of
+    # byte-seeking from the end; revisit if a daily file turns out to be
+    # unusually large.
     if not path.exists():
         return []
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()

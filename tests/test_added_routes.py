@@ -45,7 +45,7 @@ def test_get_added_shows_empty_state_when_no_events(tmp_path):
     response = client.get("/added")
 
     assert response.status_code == 200
-    assert "Aucun ajout" in response.text
+    assert "No additions" in response.text
 
 
 def test_get_added_shows_error_when_logs_missing(tmp_path):
@@ -55,4 +55,4 @@ def test_get_added_shows_error_when_logs_missing(tmp_path):
     response = client.get("/added")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text

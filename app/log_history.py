@@ -16,7 +16,7 @@ def day_label(path: Path) -> str:
 
 
 def list_available_days(logs_dir: Path) -> list[str]:
-    """Jours disponibles (hors jour courant), du plus récent au plus ancien."""
+    """Available days (excluding the current day), newest to oldest."""
     return sorted((day_label(p) for p in list_rotated_log_files(logs_dir)), reverse=True)
 
 

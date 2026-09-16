@@ -59,7 +59,7 @@ def logs_page(request: Request, day: str | None = None):
         return templates.TemplateResponse(
             request,
             "_error_page.html",
-            {"message": f"Logs introuvables : {path}. Vérifiez le bind mount de logs/."},
+            {"message": f"Logs not found: {path}. Check the logs/ bind mount."},
         )
     entries = read_recent_entries(path, max_entries=200)
     return templates.TemplateResponse(

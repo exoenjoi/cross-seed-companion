@@ -26,8 +26,8 @@ def test_get_actions_lists_builtin_actions():
     response = client.get("/actions")
 
     assert response.status_code == 200
-    assert "Lancer une recherche" in response.text
-    assert "Notifier un infoHash" in response.text
+    assert "Run a search" in response.text
+    assert "Notify an infoHash" in response.text
 
 
 def test_get_actions_shows_error_when_custom_file_invalid(tmp_path):
@@ -38,7 +38,7 @@ def test_get_actions_shows_error_when_custom_file_invalid(tmp_path):
     response = client.get("/actions")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text
 
 
 def test_get_actions_shows_error_when_custom_file_missing(tmp_path):
@@ -48,7 +48,7 @@ def test_get_actions_shows_error_when_custom_file_missing(tmp_path):
     response = client.get("/actions")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text
 
 
 def test_post_run_action_returns_result_fragment(monkeypatch):
@@ -75,7 +75,7 @@ def test_post_run_action_unknown_id_returns_error_fragment():
     response = client.post("/actions/does-not-exist/run")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text
     assert "does-not-exist" in response.text
 
 
@@ -88,4 +88,4 @@ def test_get_actions_ping_reflects_health(monkeypatch):
     response = client.get("/actions/ping")
 
     assert response.status_code == 200
-    assert "en ligne" in response.text
+    assert "online" in response.text

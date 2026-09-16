@@ -85,7 +85,7 @@ def test_get_logs_shows_error_when_logs_missing(tmp_path):
     response = client.get("/logs")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text
 
 
 def test_format_sse_event_frames_multiline_data():

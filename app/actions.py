@@ -10,7 +10,7 @@ BUILTIN_ACTIONS_PATH = Path(__file__).resolve().parent / "actions_builtin.yaml"
 
 
 class ActionConfigError(Exception):
-    """Levée quand un fichier d'actions YAML est malformé."""
+    """Raised when an actions YAML file is malformed."""
 
 
 @dataclass
@@ -34,7 +34,7 @@ def _parse_action(raw: dict) -> Action:
         if key not in raw:
             raise ActionConfigError(f"Action invalide, champ '{key}' manquant : {raw}")
     if not isinstance(raw["method"], str):
-        raise ActionConfigError(f"Action '{raw['id']}' : le champ 'method' doit être une chaîne.")
+        raise ActionConfigError(f"Action '{raw['id']}': the 'method' field must be a string.")
     return Action(
         id=raw["id"],
         title=raw["title"],
@@ -73,7 +73,7 @@ def load_all_actions(custom_path: Path | None) -> list[Action]:
     seen: set[str] = set()
     for action in actions:
         if action.id in seen:
-            raise ActionConfigError(f"Action en double : l'id '{action.id}' est utilisé plusieurs fois.")
+            raise ActionConfigError(f"Duplicate action: id '{action.id}' is used multiple times.")
         seen.add(action.id)
     return actions
 
@@ -89,7 +89,7 @@ _VAR_RE = re.compile(r"\$\{([^}]*)\}")
 
 
 class MissingActionVariableError(Exception):
-    """Levée quand une action référence une variable ${...} inconnue ou un ${INPUT} non fourni."""
+    """Raised when an action references an unknown ${...} variable or a missing ${INPUT}."""
 
 
 def _available_variables(settings: Settings, user_input: str | None) -> dict[str, str]:
