@@ -80,6 +80,24 @@ def test_find_torznab_block_raises_when_key_appears_twice():
         find_torznab_block(text)
 
 
+def test_find_torznab_block_ignores_key_inside_block_comment():
+    """A `torznab:` mentioned inside a /** ... */ comment (e.g. an old,
+    disabled block kept for reference) must not count as a second match."""
+    text = """module.exports = {
+  /**  torznab: [
+        "https://example.com/old",
+    ],
+   */
+torznab: [1, 2].map(num => `https://example.com/${num}`),
+    delay: 30,
+};"""
+
+    start, end = find_torznab_block(text)
+
+    assert "https://example.com/old" not in text[start:end]
+    assert text[start:end].strip().startswith("[1, 2]")
+
+
 def test_extract_current_urls_reads_flat_array():
     urls = extract_current_urls(FLAT_ARRAY_CONFIG)
     assert urls == [
