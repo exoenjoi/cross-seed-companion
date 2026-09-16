@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import Settings
+from app.log_paths import CURRENT_LOG_FILENAME, resolve_logs_dir
 from app.log_tailer import LogTailer, read_recent_entries
 
 router = APIRouter()
@@ -14,8 +15,7 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 
 
 def _current_log_path(settings: Settings) -> Path:
-    logs_dir = settings.crossseed_logs_path or (settings.crossseed_config_path / "logs")
-    return Path(logs_dir) / "verbose.current.log"
+    return resolve_logs_dir(settings) / CURRENT_LOG_FILENAME
 
 
 def format_sse_event(html: str) -> str:
