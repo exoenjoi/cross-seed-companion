@@ -28,7 +28,8 @@ class CrossSeedEvent:
 def extract_events(entries: list[LogEntry]) -> list[CrossSeedEvent]:
     events: list[CrossSeedEvent] = []
     for entry in entries:
-        match = MATCH_RE.match(entry.message)
+        message = entry.message.partition("\n")[0][:1024]
+        match = MATCH_RE.match(message)
         if match and match["outcome"] in SUCCESSFUL_OUTCOMES:
             events.append(
                 CrossSeedEvent(
