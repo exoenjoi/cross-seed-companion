@@ -1,7 +1,7 @@
 {% if ok %}
-<div class="notice">{{ message }}</div>
+<div class="notice" role="status">{{ message }}</div>
 {% else %}
-<div class="error-box">
+<div class="error-box" role="alert">
   <span class="error-tag">Error</span>
   {{ message }}
 </div>

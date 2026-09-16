@@ -1,1 +1,1 @@
-<div class="log-line log-level-{{ entry.level }}"><span class="log-time">{{ entry.timestamp }}</span><span class="log-tag">{{ entry.level }}</span><span class="log-component">[{{ entry.component }}]</span>{{ entry.message }}</div>
+<div class="log-line log-level-{{ entry.level | lower }}"><span class="log-time">{{ entry.timestamp }}</span><span class="log-tag">{{ entry.level }}</span><span class="log-component">[{{ entry.component }}]</span>{{ entry.message }}</div>

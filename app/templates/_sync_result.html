@@ -30,7 +30,7 @@
   </p>
 {% else %}
   <div class="actions">
-    <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirm sync?">
+    <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirm sync?" hx-disabled-elt="find button">
       <button type="submit">Confirm and apply</button>
     </form>
   </div>
