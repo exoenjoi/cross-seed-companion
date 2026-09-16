@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
@@ -31,6 +32,11 @@ app.include_router(sync_router.router)
 app.include_router(actions_router.router)
 app.include_router(logs_router.router)
 app.include_router(added_router.router)
+
+
+@app.get("/")
+def root() -> RedirectResponse:
+    return RedirectResponse(url="/sync")
 
 
 @app.get("/healthz")
