@@ -155,3 +155,30 @@ def test_log_tailer_close_releases_file_handle(tmp_path):
     # Closing again should not raise an error
     tailer.close()
     assert tailer._file is None
+
+
+def test_log_tailer_treats_bracket_less_line_as_its_own_entry(tmp_path):
+    # Same real-log edge case as log_parser: some lines have no [component]
+    # at all (e.g. "verbose: Unlinking ..."). The tailer has its own inline
+    # copy of the match/continuation logic and must not glue these onto the
+    # previous pending entry either.
+    current, target = _make_current_log(
+        tmp_path, "verbose.2026-09-15.log", "2026-09-15 00:00:00.000 info: [x] old entry\n"
+    )
+    tailer = LogTailer(current)
+    tailer.read_new_entries()  # seeks to EOF on first open; "old entry" is backfill, never read here
+
+    with target.open("a") as f:
+        f.write("2026-09-15 00:00:01.000 error: [inject] first entry\n")
+        f.write("2026-09-15 00:00:02.000 verbose: Unlinking /data/torrents/Movie.mkv\n")
+        f.write("2026-09-15 00:00:03.000 info: [x] third entry\n")
+
+    entries = tailer.read_new_entries()
+
+    assert [e.message for e in entries] == [
+        "first entry",
+        "Unlinking /data/torrents/Movie.mkv",
+    ]
+    bracket_less = entries[-1]
+    assert bracket_less.component == ""
+    assert bracket_less.level == "verbose"
