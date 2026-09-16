@@ -19,7 +19,7 @@ def _current_log_path(settings: Settings) -> Path:
 
 
 def format_sse_event(html: str) -> str:
-    return "".join(f"data: {line}\n" for line in html.split("\n")) + "\n"
+    return "".join(f"data: {line}\n" for line in html.splitlines()) + "\n"
 
 
 async def sse_log_stream(

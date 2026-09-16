@@ -39,7 +39,7 @@ class LogTailer:
         if self._file is None:
             return entries
         for raw_line in self._file.readlines():
-            line = raw_line.rstrip("\n")
+            line = raw_line.rstrip("\r\n")
             match = ENTRY_RE.match(line)
             if match:
                 if self._pending is not None:
