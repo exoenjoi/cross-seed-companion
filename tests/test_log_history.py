@@ -67,3 +67,16 @@ def test_read_all_events_respects_max_events_cap(tmp_path):
 
 def test_read_all_events_returns_empty_list_when_dir_missing(tmp_path):
     assert read_all_events(tmp_path / "missing") == []
+
+
+def test_read_all_events_tolerates_invalid_utf8_in_one_file(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    good = logs_dir / "verbose.2026-09-14.log"
+    _write_match_line(good, "2026-09-14 10:00:00.000", "Movie.One", "TrackerA")
+    bad = logs_dir / "verbose.2026-09-15.log"
+    bad.write_bytes(b"\xff\xfe not valid utf-8")
+
+    events = read_all_events(logs_dir)
+
+    assert [event.name for event in events] == ["Movie.One"]

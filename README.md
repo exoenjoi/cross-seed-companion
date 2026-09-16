@@ -47,9 +47,14 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   files yet — see Roadmap).
 - **Added torrents** — a `/added` page lists torrents cross-seed has actually
   added to your torrent client (name, source tracker, date), parsed from
-  every available `verbose.*.log` file — no qBittorrent connection needed.
-  Only lines cross-seed itself marks as a genuine success count; injection
-  failures and "already exists" lines are excluded.
+  every available `verbose.*.log` file — no qBittorrent connection needed
+  (the "saved" outcome, for cross-seed's alternate save-only mode, is
+  included by the same rule but hasn't been exercised against a real log
+  sample — only "injected" has). Only lines cross-seed itself marks as a
+  genuine success count; injection failures and "already exists" lines are
+  excluded. Reads every available log file on each page load (no caching, no
+  database) — fine for typical retention windows, but page-load time scales
+  with total log volume if you keep a very large number of days.
 
 ## Architecture
 

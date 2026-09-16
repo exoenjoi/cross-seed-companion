@@ -14,7 +14,10 @@ def list_rotated_log_files(logs_dir: Path) -> list[Path]:
 def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEvent]:
     events: list[CrossSeedEvent] = []
     for path in list_rotated_log_files(logs_dir):
-        lines = path.read_text().splitlines()
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
         entries = parse_log_lines(lines)
         events.extend(extract_events(entries))
     events.sort(key=lambda event: event.timestamp, reverse=True)
