@@ -1,16 +1,14 @@
 import re
-from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, Request
-from fastapi.templating import Jinja2Templates
 
 from app.crossseed_config import TorznabBlockError
 from app.prowlarr import Indexer
 from app.sync_service import apply_sync, compute_sync_preview, extract_indexer_id
+from app.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 _API_KEY_RE = re.compile(r"(apikey=)([^&]+)")
 

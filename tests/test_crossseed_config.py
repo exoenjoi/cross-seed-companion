@@ -106,6 +106,19 @@ def test_extract_current_urls_reads_flat_array():
     ]
 
 
+def test_extract_current_urls_ignores_commented_out_url():
+    config = """module.exports = {
+  torznab: [
+    "http://prowlarr:9696/1/api?apikey=live",
+    // "http://prowlarr:9696/2/api?apikey=disabled",
+    /* "http://prowlarr:9696/3/api?apikey=disabled" */
+  ],
+  delay: 30,
+};
+"""
+    assert extract_current_urls(config) == ["http://prowlarr:9696/1/api?apikey=live"]
+
+
 def test_extract_current_urls_reads_map_style_array():
     urls = extract_current_urls(MAP_STYLE_CONFIG)
     assert urls == [

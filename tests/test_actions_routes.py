@@ -79,6 +79,23 @@ def test_post_run_action_unknown_id_returns_error_fragment():
     assert "does-not-exist" in response.text
 
 
+def test_post_run_action_handles_non_httperror_exception(monkeypatch):
+    """A malformed custom action (e.g. a bare YAML date in the body, which
+    json.dumps can't serialize) must render an error fragment, not a 500."""
+
+    def fake_run_action(action, settings, user_input=None, transport=None):
+        raise TypeError("Object of type date is not JSON serializable")
+
+    monkeypatch.setattr(actions_router, "run_action", fake_run_action)
+    client = _client()
+
+    response = client.post("/actions/search/run")
+
+    assert response.status_code == 200
+    assert "Error" in response.text
+    assert "not JSON serializable" in response.text
+
+
 def test_get_actions_ping_reflects_health(monkeypatch):
     from app import action_runner
 

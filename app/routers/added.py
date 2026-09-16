@@ -1,14 +1,11 @@
-from pathlib import Path
-
 from fastapi import APIRouter, Request
-from fastapi.templating import Jinja2Templates
 
 from app.crossseed_events import group_events_by_name
 from app.log_history import read_all_events
 from app.log_paths import resolve_logs_dir
+from app.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 
 def _load_grouped(request: Request):

@@ -15,30 +15,8 @@ class LogTailer:
         self._pending: LogEntry | None = None
         self._first_open = True
 
-    def _reopen_if_rotated(self) -> bool:
-        target = self._symlink_path.resolve()
-        if target == self._target:
-            return False
-        if self._file is not None:
-            self._file.close()
-            self._file = None
-        if target.exists():
-            self._file = target.open("r", encoding="utf-8", errors="replace")
-            if self._first_open:
-                self._file.seek(0, 2)  # end of file: backfill already covers the history
-            self._target = target
-            self._first_open = False
-        return True
-
-    def read_new_entries(self) -> list[LogEntry]:
-        entries: list[LogEntry] = []
-        rotated = self._reopen_if_rotated()
-        if rotated and self._pending is not None:
-            entries.append(self._pending)
-            self._pending = None
-        if self._file is None:
-            return entries
-        for raw_line in self._file.readlines():
+    def _drain_lines(self, file, entries: list[LogEntry]) -> None:
+        for raw_line in file.readlines():
             line = raw_line.rstrip("\r\n")
             match = ENTRY_RE.match(line)
             if match:
@@ -52,6 +30,34 @@ class LogTailer:
                 )
             elif self._pending is not None:
                 self._pending.message += "\n" + line
+
+    def _reopen_if_rotated(self, entries: list[LogEntry]) -> bool:
+        target = self._symlink_path.resolve()
+        if target == self._target:
+            return False
+        if self._file is not None:
+            # Drain whatever was appended to the outgoing day's file since
+            # the last poll before closing it, so those lines aren't lost.
+            self._drain_lines(self._file, entries)
+            self._file.close()
+            self._file = None
+        if self._pending is not None:
+            entries.append(self._pending)
+            self._pending = None
+        if target.exists():
+            self._file = target.open("r", encoding="utf-8", errors="replace")
+            if self._first_open:
+                self._file.seek(0, 2)  # end of file: backfill already covers the history
+            self._target = target
+            self._first_open = False
+        return True
+
+    def read_new_entries(self) -> list[LogEntry]:
+        entries: list[LogEntry] = []
+        self._reopen_if_rotated(entries)
+        if self._file is None:
+            return entries
+        self._drain_lines(self._file, entries)
         return entries
 
     def close(self) -> None:

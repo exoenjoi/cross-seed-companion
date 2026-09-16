@@ -1,16 +1,14 @@
 import json
 import re
-from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, Form, Request
-from fastapi.templating import Jinja2Templates
 
 from app.action_runner import ping_crossseed, run_action
 from app.actions import ActionConfigError, MissingActionVariableError, find_action, load_all_actions
+from app.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 templates.env.filters["json_compact"] = lambda value: json.dumps(value, ensure_ascii=False)
 
 _API_ENDPOINT_RE = re.compile(r"/api/([^/?]+)")
@@ -59,7 +57,7 @@ def actions_run(request: Request, action_id: str, input: str | None = Form(None)
 
     try:
         result = run_action(action, settings, user_input=input)
-    except (httpx.HTTPError, MissingActionVariableError) as exc:
+    except (httpx.HTTPError, httpx.InvalidURL, MissingActionVariableError, TypeError) as exc:
         return templates.TemplateResponse(request, "_action_result.html", {"ok": False, "message": str(exc)})
 
     message = f"{action.title} → HTTP {result.status_code}"
