@@ -1,4 +1,12 @@
-from app.log_history import list_rotated_log_files, read_all_events
+from pathlib import Path
+
+from app.log_history import (
+    day_label,
+    list_available_days,
+    list_rotated_log_files,
+    read_all_events,
+    read_day_entries,
+)
 
 
 def _write_match_line(path, timestamp: str, name: str, tracker: str, outcome: str = "injected") -> None:
@@ -80,3 +88,52 @@ def test_read_all_events_tolerates_invalid_utf8_in_one_file(tmp_path):
     events = read_all_events(logs_dir)
 
     assert [event.name for event in events] == ["Movie.One"]
+
+
+def test_day_label_strips_prefix_and_suffix():
+    assert day_label(Path("verbose.2026-09-15.log")) == "2026-09-15"
+
+
+def test_list_available_days_excludes_current_and_sorts_newest_first(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    day2 = logs_dir / "verbose.2026-09-15.log"
+    day1.write_text("")
+    day2.write_text("")
+    (logs_dir / "verbose.current.log").symlink_to(day2)
+
+    assert list_available_days(logs_dir) == ["2026-09-15", "2026-09-14"]
+
+
+def test_read_day_entries_parses_the_matching_rotated_file(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    day1.write_text("2026-09-14 10:00:00.000 info: [x] entry from day1\n")
+    day2 = logs_dir / "verbose.2026-09-15.log"
+    day2.write_text("2026-09-15 10:00:00.000 info: [x] entry from day2\n")
+
+    entries = read_day_entries(logs_dir, "2026-09-14")
+
+    assert [e.message for e in entries] == ["entry from day1"]
+
+
+def test_read_day_entries_returns_empty_list_for_unknown_day(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+
+    assert read_day_entries(logs_dir, "2026-01-01") == []
+
+
+def test_read_day_entries_tolerates_invalid_utf8(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    day1.write_bytes(
+        "2026-09-14 10:00:00.000 info: [x] entry with \xe9 accent\n".encode("latin-1")
+    )
+
+    entries = read_day_entries(logs_dir, "2026-09-14")
+
+    assert len(entries) == 1

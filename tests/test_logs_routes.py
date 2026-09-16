@@ -47,6 +47,37 @@ def test_get_logs_shows_backfill_entries(tmp_path):
     assert "backfilled entry" in response.text
 
 
+def test_get_logs_with_day_param_shows_that_days_entries(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    day1.write_text("2026-09-14 00:00:00.000 info: [x] entry from day1\n")
+    day2 = logs_dir / "verbose.2026-09-15.log"
+    day2.write_text("2026-09-15 00:00:00.000 info: [x] entry from day2\n")
+    (logs_dir / "verbose.current.log").symlink_to(day2)
+
+    client = _client(logs_dir)
+    response = client.get("/logs", params={"day": "2026-09-14"})
+
+    assert response.status_code == 200
+    assert "entry from day1" in response.text
+    assert "entry from day2" not in response.text
+
+
+def test_get_logs_with_unknown_day_falls_back_to_current(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day2 = logs_dir / "verbose.2026-09-15.log"
+    day2.write_text("2026-09-15 00:00:00.000 info: [x] entry from day2\n")
+    (logs_dir / "verbose.current.log").symlink_to(day2)
+
+    client = _client(logs_dir)
+    response = client.get("/logs", params={"day": "2099-01-01"})
+
+    assert response.status_code == 200
+    assert "entry from day2" in response.text
+
+
 def test_get_logs_shows_error_when_logs_missing(tmp_path):
     logs_dir = tmp_path / "logs"  # n'existe pas
 
