@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -130,10 +131,35 @@ def _extract_map_style_urls(block: str) -> list[str]:
     return [match["template"].replace(placeholder, item) for item in items]
 
 
+def _mask_comments(text: str) -> str:
+    """Same idea as `_mask_comments_and_strings`, but string literals are
+    left untouched (only comment contents are blanked): callers that need
+    to read string content, like URL extraction, use this so a URL sitting
+    inside a // or /* */ comment isn't picked up as a live entry."""
+    masked = list(text)
+    i = 0
+    n = len(text)
+    while i < n:
+        if text[i:i + 2] == "//":
+            end = _skip_line_comment(text, i)
+        elif text[i:i + 2] == "/*":
+            end = _skip_block_comment(text, i)
+        elif text[i] in _QUOTE_CHARS:
+            i = _skip_string(text, i)
+            continue
+        else:
+            i += 1
+            continue
+        for j in range(i, end):
+            masked[j] = " "
+        i = end
+    return "".join(masked)
+
+
 def extract_current_urls(config_text: str) -> list[str]:
     start, end = find_torznab_block(config_text)
     block = config_text[start:end]
-    urls = re.findall(r'"([^"]*)"', block)
+    urls = re.findall(r'"([^"]*)"', _mask_comments(block))
     if urls:
         return urls
     return _extract_map_style_urls(block)
@@ -161,5 +187,10 @@ def backup_config(path: Path) -> Path:
 
 
 def write_config(path: Path, new_text: str) -> None:
-    with path.open("w", newline="") as f:
+    # Write-then-rename so an interrupted write (OOM, disk full, kill) never
+    # leaves config.js truncated: the file only ever holds the old or the
+    # new complete content.
+    tmp_path = path.with_name(f"{path.name}.tmp")
+    with tmp_path.open("w", newline="") as f:
         f.write(new_text)
+    os.replace(tmp_path, path)

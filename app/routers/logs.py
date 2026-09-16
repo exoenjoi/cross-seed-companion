@@ -4,15 +4,14 @@ from typing import AsyncIterator
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from fastapi.templating import Jinja2Templates
 
 from app.config import Settings
 from app.log_history import list_available_days, read_day_entries
 from app.log_paths import CURRENT_LOG_FILENAME, resolve_logs_dir
 from app.log_tailer import LogTailer, read_recent_entries
+from app.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
 
 
 def _current_log_path(settings: Settings) -> Path:

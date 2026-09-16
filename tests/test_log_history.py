@@ -120,11 +120,15 @@ def test_list_available_days_excludes_current_and_sorts_newest_first(tmp_path):
     logs_dir.mkdir()
     day1 = logs_dir / "verbose.2026-09-14.log"
     day2 = logs_dir / "verbose.2026-09-15.log"
+    day3 = logs_dir / "verbose.2026-09-13.log"
     day1.write_text("")
     day2.write_text("")
+    day3.write_text("")
     (logs_dir / "verbose.current.log").symlink_to(day2)
 
-    assert list_available_days(logs_dir) == ["2026-09-15", "2026-09-14"]
+    # day2 is today (the symlink target) and must not appear twice: it's
+    # already offered as "Today" in the UI.
+    assert list_available_days(logs_dir) == ["2026-09-14", "2026-09-13"]
 
 
 def test_read_day_entries_parses_the_matching_rotated_file(tmp_path):

@@ -99,6 +99,33 @@ def test_log_tailer_detects_symlink_rotation_and_flushes_pending_entry(tmp_path)
     assert [e.message for e in entries] == ["last entry of day1"]
 
 
+def test_log_tailer_flushes_unread_lines_from_outgoing_day_on_rotation(tmp_path):
+    """Regression test: lines appended to today's file in the same poll
+    window as the day's rotation must not be dropped."""
+    current, day1 = _make_current_log(
+        tmp_path, "verbose.2026-09-14.log", "2026-09-14 23:58:00.000 info: [x] backfill entry\n"
+    )
+    tailer = LogTailer(current)
+    tailer.read_new_entries()  # premier open : pas de contenu ancien rejoué
+
+    # Ces deux lignes n'ont jamais été lues par un poll intermédiaire.
+    with day1.open("a") as f:
+        f.write("2026-09-14 23:59:00.000 info: [x] last entry before rotation\n")
+        f.write("2026-09-14 23:59:30.000 info: [x] closes the previous one\n")
+
+    day2 = tmp_path / "verbose.2026-09-15.log"
+    day2.write_text("2026-09-15 00:00:00.000 info: [x] first entry of day2\n")
+    current.unlink()
+    current.symlink_to(day2)
+
+    entries = tailer.read_new_entries()
+
+    assert [e.message for e in entries] == [
+        "last entry before rotation",
+        "closes the previous one",
+    ]
+
+
 def test_log_tailer_handles_rotation_race_when_new_file_not_yet_created(tmp_path):
     """Test that tailer doesn't get permanently stuck if symlink target doesn't exist yet.
 

@@ -17,7 +17,12 @@ def day_label(path: Path) -> str:
 
 def list_available_days(logs_dir: Path) -> list[str]:
     """Available days (excluding the current day), newest to oldest."""
-    return sorted((day_label(p) for p in list_rotated_log_files(logs_dir)), reverse=True)
+    current_path = logs_dir / CURRENT_LOG_FILENAME
+    today = current_path.resolve() if current_path.exists() else None
+    return sorted(
+        (day_label(p) for p in list_rotated_log_files(logs_dir) if p.resolve() != today),
+        reverse=True,
+    )
 
 
 def read_day_entries(logs_dir: Path, day: str) -> list[LogEntry]:
@@ -33,7 +38,10 @@ def read_day_entries(logs_dir: Path, day: str) -> list[LogEntry]:
 
 def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEvent]:
     events: list[CrossSeedEvent] = []
-    for path in list_rotated_log_files(logs_dir):
+    # Newest file first, stopping once we have enough: bounds the amount of
+    # log scanned to roughly what's needed, instead of every rotated file
+    # the deployment has ever produced.
+    for path in reversed(list_rotated_log_files(logs_dir)):
         try:
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
@@ -41,5 +49,7 @@ def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEven
         candidate_lines = [line for line in lines if MATCH_MARKER in line]
         entries = parse_log_lines(candidate_lines)
         events.extend(extract_events(entries))
+        if len(events) >= max_events:
+            break
     events.sort(key=lambda event: event.timestamp, reverse=True)
     return events[:max_events]
