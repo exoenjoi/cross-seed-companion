@@ -107,11 +107,14 @@ Everything is configured through environment variables.
 
 ## Security
 
-CSC has **no authentication and no CSRF protection built in**. `POST
-/sync/apply` rewrites a real file on disk, and the diff view displays your
-Prowlarr API key in plain text. **Never expose this port directly to the
-internet** — put it behind your own reverse proxy's authentication, or
-restrict it to a private network/VPN.
+CSC has **no authentication and no CSRF protection built in, and none is
+planned** — that's deliberately out of scope; a reverse-proxy auth layer
+already does this well, and reimplementing it here would just be another
+attack surface. `POST /sync/apply` rewrites a real file on disk, and the
+diff view displays your Prowlarr API key in plain text. **Never expose this
+port directly to the internet** — put it behind an authenticating reverse
+proxy (e.g. [Authentik](https://goauthentik.io/), [Authelia](https://www.authelia.com/),
+or your proxy's own basic auth), or restrict it to a private network/VPN.
 
 CSC's own hard design constraints (not just this feature's, the whole
 project's): no SSH, no Docker socket access, no shell/subprocess execution
