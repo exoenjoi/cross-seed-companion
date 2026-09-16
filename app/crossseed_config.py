@@ -68,8 +68,31 @@ def _find_matching(text: str, open_pos: int, open_ch: str, close_ch: str) -> int
     raise TorznabBlockError(f"'{open_ch}' non refermé dans config.js.")
 
 
+def _mask_comments_and_strings(text: str) -> str:
+    """Return `text` with comment/string contents blanked out (same length),
+    so keyword matching can ignore anything inside a // , /* */ or quote."""
+    masked = list(text)
+    i = 0
+    n = len(text)
+    while i < n:
+        if text[i:i + 2] == "//":
+            end = _skip_line_comment(text, i)
+        elif text[i:i + 2] == "/*":
+            end = _skip_block_comment(text, i)
+        elif text[i] in _QUOTE_CHARS:
+            end = _skip_string(text, i)
+        else:
+            i += 1
+            continue
+        for j in range(i, end):
+            masked[j] = " "
+        i = end
+    return "".join(masked)
+
+
 def find_torznab_block(config_text: str) -> tuple[int, int]:
-    matches = list(_TORZNAB_KEY_RE.finditer(config_text))
+    masked_text = _mask_comments_and_strings(config_text)
+    matches = list(_TORZNAB_KEY_RE.finditer(masked_text))
     if len(matches) != 1:
         raise TorznabBlockError(
             f"'torznab:' doit apparaître exactement une fois dans config.js "
