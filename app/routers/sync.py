@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import httpx
@@ -5,10 +6,33 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from app.crossseed_config import TorznabBlockError
-from app.sync_service import apply_sync, compute_sync_preview
+from app.sync_service import apply_sync, compute_sync_preview, extract_indexer_id
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
+
+_API_KEY_RE = re.compile(r"(apikey=)([^&]+)")
+
+
+def _indexer_name(url: str, indexer_names: dict[int, str]) -> str | None:
+    indexer_id = extract_indexer_id(url)
+    return indexer_names.get(indexer_id) if indexer_id is not None else None
+
+
+def _mask_api_key(url: str) -> str:
+    """Truncate the apikey= value so the diff table doesn't leak full keys."""
+
+    def _mask(match: re.Match) -> str:
+        key = match.group(2)
+        if len(key) <= 8:
+            return match.group(0)
+        return f"{match.group(1)}{key[:8]}…"
+
+    return _API_KEY_RE.sub(_mask, url)
+
+
+templates.env.filters["indexer_name"] = _indexer_name
+templates.env.filters["mask_api_key"] = _mask_api_key
 
 
 @router.get("/sync")

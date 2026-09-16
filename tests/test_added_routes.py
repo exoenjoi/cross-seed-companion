@@ -35,6 +35,7 @@ def test_get_added_shows_events_from_rotated_files(tmp_path):
     assert response.status_code == 200
     assert "Movie.One.mkv" in response.text
     assert "TrackerA" in response.text
+    assert "1 torrent(s) added" in response.text
 
 
 def test_get_added_shows_empty_state_when_no_events(tmp_path):

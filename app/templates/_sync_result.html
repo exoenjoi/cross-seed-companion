@@ -3,8 +3,8 @@
 </p>
 {% if preview.added or preview.removed %}
 <table class="diff">
-  {% for url in preview.added %}<tr><td class="added">+ {{ url }}</td></tr>{% endfor %}
-  {% for url in preview.removed %}<tr><td class="removed">- {{ url }}</td></tr>{% endfor %}
+  {% for url in preview.added %}<tr><td class="added">+ {% set name = url | indexer_name(preview.indexer_names) %}{% if name %}{{ name }} — {% endif %}{{ url | mask_api_key }}</td></tr>{% endfor %}
+  {% for url in preview.removed %}<tr><td class="removed">- {% set name = url | indexer_name(preview.indexer_names) %}{% if name %}{{ name }} — {% endif %}{{ url | mask_api_key }}</td></tr>{% endfor %}
 </table>
 {% endif %}
 {% if preview.current_urls == preview.new_urls %}

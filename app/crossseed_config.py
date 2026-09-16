@@ -113,10 +113,30 @@ def find_torznab_block(config_text: str) -> tuple[int, int]:
     return array_start, end
 
 
+_MAP_STYLE_RE = re.compile(
+    r"^\s*\[(?P<items>[^\]]*)\]\s*\.map\s*\(\s*\(?\s*(?P<param>\w+)\s*\)?\s*=>\s*"
+    r"`(?P<template>[^`]*)`\s*\)\s*$"
+)
+
+
+def _extract_map_style_urls(block: str) -> list[str]:
+    match = _MAP_STYLE_RE.match(block)
+    if not match:
+        return []
+    placeholder = "${" + match["param"] + "}"
+    if placeholder not in match["template"]:
+        return []
+    items = [item.strip() for item in match["items"].split(",") if item.strip()]
+    return [match["template"].replace(placeholder, item) for item in items]
+
+
 def extract_current_urls(config_text: str) -> list[str]:
     start, end = find_torznab_block(config_text)
     block = config_text[start:end]
-    return re.findall(r'"([^"]*)"', block)
+    urls = re.findall(r'"([^"]*)"', block)
+    if urls:
+        return urls
+    return _extract_map_style_urls(block)
 
 
 def replace_torznab_block(config_text: str, urls: list[str]) -> str:
