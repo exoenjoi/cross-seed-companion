@@ -12,15 +12,13 @@ services:
       PGID: "1000"
       PROWLARR_URL: "http://prowlarr:9696"
       PROWLARR_API_KEY: "changeme"
-      # Required at startup and used by the Phase 2 actions feature
+      # Required at startup and used by the actions feature
       # (built-in search/notify actions call the cross-seed API using these).
       CROSSSEED_URL: "http://cross-seed:2468"
       CROSSSEED_API_KEY: "changeme"
       CROSSSEED_CONFIG_PATH: "/crossseed-config"
       SYNC_EXCLUDE_PUBLIC: "true"
       SYNC_EXCLUDE_TAG: "no-cross-seed"
-      # Not implemented yet in phase 1 — currently has no effect.
-      SYNC_INTERVAL_MINUTES: "60"
       DOCKER_MANAGER_URL: "https://portainer.example.com"
       # Optional: path to a custom actions YAML file (see examples/custom-actions.example.yml)
       # ACTIONS_CONFIG_PATH: "/crossseed-config/custom-actions.yml"
