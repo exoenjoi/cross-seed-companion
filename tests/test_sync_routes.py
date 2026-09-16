@@ -84,6 +84,21 @@ def test_get_sync_masks_long_api_keys_in_diff_table(tmp_path):
     assert "apikey=ce571e6a…" in response.text
 
 
+def test_get_sync_lists_current_indexers_when_only_key_rotated(tmp_path):
+    """Same indexer id on both sides means added/removed are both empty, but
+    the page must still list the current indexers by name instead of
+    rendering nothing between the counts and the apply button."""
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=1, name="A", enable=True, privacy="private", tags=[])],
+    )
+
+    response = client.get("/sync")
+
+    assert response.status_code == 200
+    assert "A — http://prowlarr:9696/1/api?apikey=old" in response.text
+
+
 def test_post_sync_apply_writes_config_and_confirms(tmp_path):
     client = _client(
         tmp_path,
