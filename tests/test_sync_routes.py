@@ -82,10 +82,12 @@ def test_get_sync_shows_id_privacy_and_added_date_next_to_indexer(tmp_path):
     response = client.get("/sync")
 
     assert response.status_code == 200
-    assert '<th>Indexer</th><th>Privacy</th><th>ID</th><th>Added</th><th>URL</th>' in response.text
-    assert '<td class="idx-id">2</td>' in response.text
-    assert '<td class="idx-privacy idx-privacy-private">private</td>' in response.text
-    assert '<td class="idx-added">2025-12-28</td>' in response.text
+    assert '<th class="sortable" data-sort-col="0" data-sort-type="text">Indexer</th>' in response.text
+    assert '<th class="sortable" data-sort-col="2" data-sort-type="num" data-sort-dir="desc">ID</th>' in response.text
+    assert '<th>URL</th>' in response.text
+    assert '<td class="idx-id" data-sort="2">2</td>' in response.text
+    assert '<td class="idx-privacy idx-privacy-private" data-sort="private">private</td>' in response.text
+    assert '<td class="idx-added" data-sort="2025-12-28">2025-12-28</td>' in response.text
 
 
 def test_get_sync_masks_long_api_keys_in_diff_table(tmp_path):
