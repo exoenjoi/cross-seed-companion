@@ -106,6 +106,15 @@ def test_extract_current_urls_reads_flat_array():
     ]
 
 
+def test_extract_current_urls_reads_map_style_array():
+    urls = extract_current_urls(MAP_STYLE_CONFIG)
+    assert urls == [
+        "http://prowlarr:9696/1/api?apikey=old",
+        "http://prowlarr:9696/2/api?apikey=old",
+        "http://prowlarr:9696/6/api?apikey=old",
+    ]
+
+
 def test_replace_torznab_block_normalizes_flat_array():
     result = replace_torznab_block(
         FLAT_ARRAY_CONFIG,

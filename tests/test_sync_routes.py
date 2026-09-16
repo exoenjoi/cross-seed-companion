@@ -27,7 +27,7 @@ class FakeProwlarr:
         return self._tags
 
 
-def _client(tmp_path, indexers, tags=None) -> TestClient:
+def _client(tmp_path, indexers, tags=None, prowlarr_api_key="new-key") -> TestClient:
     config_path = tmp_path / "config.js"
     config_path.write_text(CONFIG_TEXT)
 
@@ -36,7 +36,7 @@ def _client(tmp_path, indexers, tags=None) -> TestClient:
     app.state.settings = Settings(
         _env_file=None,
         prowlarr_url="http://prowlarr:9696",
-        prowlarr_api_key="new-key",
+        prowlarr_api_key=prowlarr_api_key,
         crossseed_url="http://cross-seed:2468",
         crossseed_api_key="cs-key",
         crossseed_config_path=str(tmp_path),
@@ -56,6 +56,32 @@ def test_get_sync_shows_diff_preview(tmp_path):
     assert response.status_code == 200
     assert "http://prowlarr:9696/2/api?apikey=new-key" in response.text
     assert "Confirm and apply" in response.text
+
+
+def test_get_sync_shows_indexer_name_next_to_url(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=2, name="The Old School", enable=True, privacy="private", tags=[])],
+    )
+
+    response = client.get("/sync")
+
+    assert response.status_code == 200
+    assert "The Old School — http://prowlarr:9696/2/api" in response.text
+
+
+def test_get_sync_masks_long_api_keys_in_diff_table(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=2, name="B", enable=True, privacy="private", tags=[])],
+        prowlarr_api_key="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+    )
+
+    response = client.get("/sync")
+
+    assert response.status_code == 200
+    assert "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" not in response.text
+    assert "apikey=a1b2c3d4…" in response.text
 
 
 def test_post_sync_apply_writes_config_and_confirms(tmp_path):

@@ -6,6 +6,8 @@
 
 {% if not events %}
 <p class="meta">No additions found in the available logs.</p>
+{% else %}
+<p class="meta">{{ events | length }} torrent(s) added</p>
 {% endif %}
 
 <div class="added-list">
