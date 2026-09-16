@@ -55,7 +55,7 @@ def test_get_sync_shows_diff_preview(tmp_path):
 
     assert response.status_code == 200
     assert "http://prowlarr:9696/2/api?apikey=new-key" in response.text
-    assert "Confirmer et appliquer" in response.text
+    assert "Confirm and apply" in response.text
 
 
 def test_post_sync_apply_writes_config_and_confirms(tmp_path):
@@ -67,13 +67,13 @@ def test_post_sync_apply_writes_config_and_confirms(tmp_path):
     response = client.post("/sync/apply")
 
     assert response.status_code == 200
-    assert "appliquée" in response.text
+    assert "applied" in response.text
     assert (tmp_path / "config.js").read_text().count("http://prowlarr:9696/2/api?apikey=new-key") == 1
 
 
 def test_get_sync_shows_apply_form_when_only_api_key_rotated(tmp_path):
     """Same indexer id (1) on both sides but a rotated API key must still
-    surface the apply form, not the 'Déjà synchronisé' no-op message."""
+    surface the apply form, not the 'Already in sync' no-op message."""
     client = _client(
         tmp_path,
         indexers=[Indexer(id=1, name="A", enable=True, privacy="private", tags=[])],
@@ -82,8 +82,8 @@ def test_get_sync_shows_apply_form_when_only_api_key_rotated(tmp_path):
     response = client.get("/sync")
 
     assert response.status_code == 200
-    assert "Déjà synchronisé" not in response.text
-    assert "Confirmer et appliquer" in response.text
+    assert "Already in sync" not in response.text
+    assert "Confirm and apply" in response.text
 
 
 def test_get_sync_shows_error_when_torznab_block_missing(tmp_path):
@@ -103,7 +103,7 @@ def test_get_sync_shows_error_when_torznab_block_missing(tmp_path):
     response = TestClient(client).get("/sync")
 
     assert response.status_code == 200
-    assert "Erreur" in response.text
+    assert "Error" in response.text
     # Full-page GET error must render inside the app shell (base.html), not
     # as a naked unstyled fragment.
     assert "Cross-Seed Companion" in response.text

@@ -1,29 +1,29 @@
 - id: search
-  title: "Lancer une recherche"
+  title: "Run a search"
   method: POST
   url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
   body:
     name: search
-  confirm: "Lancer une recherche cross-seed sur les torrents éligibles ?"
+  confirm: "Run a cross-seed search on eligible torrents?"
 
 - id: search-full
-  title: "Recherche complète (ignore les exclusions)"
+  title: "Full search (ignores exclusions)"
   method: POST
   url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
   body:
     name: search
     ignoreExcludeRecentSearch: true
     ignoreExcludeOlder: true
-  confirm: "Lancer une recherche complète en ignorant les exclusions habituelles ? Peut être plus lourd pour les indexers."
+  confirm: "Run a full search ignoring the usual exclusions? This can be heavier on indexers."
 
 - id: notify
-  title: "Notifier un infoHash"
+  title: "Notify an infoHash"
   method: POST
   url: "${CROSSSEED_URL}/api/webhook?apikey=${CROSSSEED_API_KEY}"
   body:
     infoHash: "${INPUT}"
-  input_label: "InfoHash du torrent"
-  confirm: "Notifier cross-seed pour cet infoHash ?"
+  input_label: "Torrent infoHash"
+  confirm: "Notify cross-seed for this infoHash?"
 
 - id: cleanup
   title: "Cleanup"
@@ -31,7 +31,7 @@
   url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
   body:
     name: cleanup
-  confirm: "Lancer le job de nettoyage cross-seed ?"
+  confirm: "Run the cross-seed cleanup job?"
 
 - id: rss
   title: "RSS"
@@ -39,12 +39,12 @@
   url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
   body:
     name: rss
-  confirm: "Lancer un scan RSS cross-seed ?"
+  confirm: "Run a cross-seed RSS scan?"
 
 - id: update-indexer-caps
-  title: "Mettre à jour les capacités indexers"
+  title: "Update indexer capabilities"
   method: POST
   url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
   body:
     name: updateIndexerCaps
-  confirm: "Rafraîchir les capacités des indexers auprès de cross-seed ?"
+  confirm: "Refresh indexer capabilities from cross-seed?"

@@ -18,7 +18,7 @@ def added_page(request: Request):
         return templates.TemplateResponse(
             request,
             "_error_page.html",
-            {"message": f"Logs introuvables : {logs_dir}. Vérifiez le bind mount de logs/."},
+            {"message": f"Logs not found: {logs_dir}. Check the logs/ bind mount."},
         )
     events = read_all_events(logs_dir)
     return templates.TemplateResponse(request, "added.html", {"events": events})

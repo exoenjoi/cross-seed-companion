@@ -2,18 +2,18 @@
 {% block content %}
 <span class="section-tag">03 · Logs</span>
 <h1 class="page-title">
-  Logs cross-seed
-  {% if selected_day == "current" %}(temps réel){% else %}— {{ selected_day }}{% endif %}
+  cross-seed logs
+  {% if selected_day == "current" %}(live){% else %}— {{ selected_day }}{% endif %}
 </h1>
 
 <div class="log-controls">
   <select id="log-day-select" class="log-day-select">
-    <option value="current" {% if selected_day == "current" %}selected{% endif %}>Aujourd'hui</option>
+    <option value="current" {% if selected_day == "current" %}selected{% endif %}>Today</option>
     {% for d in available_days %}
       <option value="{{ d }}" {% if d == selected_day %}selected{% endif %}>{{ d }}</option>
     {% endfor %}
   </select>
-  <input type="text" id="log-filter" class="log-filter" placeholder="Filtrer...">
+  <input type="text" id="log-filter" class="log-filter" placeholder="Filter...">
 </div>
 
 <div id="log-container" class="log-container">

@@ -1,5 +1,5 @@
 <p class="meta">
-  {{ preview.current_urls | length }} indexer(s) actuellement — {{ preview.new_urls | length }} après synchronisation
+  {{ preview.current_urls | length }} indexer(s) currently — {{ preview.new_urls | length }} after sync
 </p>
 {% if preview.added or preview.removed %}
 <table class="diff">
@@ -8,18 +8,18 @@
 </table>
 {% endif %}
 {% if preview.current_urls == preview.new_urls %}
-  <p class="notice">Déjà synchronisé, rien à faire.</p>
+  <p class="notice">Already in sync, nothing to do.</p>
 {% elif applied %}
   <p class="notice">
-    Synchronisation appliquée. Redémarre cross-seed pour appliquer les changements.
+    Sync applied. Restart cross-seed to apply the changes.
     {% if settings.docker_manager_url %}
-      <br><a href="{{ settings.docker_manager_url }}" target="_blank" rel="noopener">Ouvrir le gestionnaire Docker →</a>
+      <br><a href="{{ settings.docker_manager_url }}" target="_blank" rel="noopener">Open Docker manager →</a>
     {% endif %}
   </p>
 {% else %}
   <div class="actions">
-    <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirmer la synchronisation ?">
-      <button type="submit">Confirmer et appliquer</button>
+    <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirm sync?">
+      <button type="submit">Confirm and apply</button>
     </form>
   </div>
 {% endif %}
