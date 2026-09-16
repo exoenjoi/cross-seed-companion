@@ -1,24 +1,44 @@
-{% macro idx_cell(url, indexers_by_id, sign) %}
+{% macro idx_row(url, indexers_by_id, sign, row_class) %}
 {% set indexer = url | indexer_for(indexers_by_id) %}
-{% if sign %}<span class="idx-sign">{{ sign }}</span>{% endif %}
-{% if indexer %}<span class="idx-name">{{ indexer.name }}</span>{% endif %}
-<span class="idx-url">{{ url | mask_api_key }}</span>
-{% if indexer %}<span class="idx-meta">ID {{ indexer.id }} · {{ indexer.privacy }}{% if indexer.added %} · added {{ indexer.added[:10] }}{% endif %}</span>{% endif %}
+<tr{% if row_class %} class="{{ row_class }}"{% endif %}>
+  <td class="idx-name-cell">
+    {% if sign %}<span class="idx-sign">{{ sign }}</span>{% endif %}
+    {% if indexer %}<span class="idx-name">{{ indexer.name }}</span>{% endif %}
+  </td>
+  <td class="idx-privacy{% if indexer %} idx-privacy-{{ indexer.privacy | lower }}{% endif %}">{{ indexer.privacy if indexer else "" }}</td>
+  <td class="idx-id">{{ indexer.id if indexer else "" }}</td>
+  <td class="idx-added">{{ indexer.added[:10] if indexer and indexer.added else "" }}</td>
+  <td class="idx-url">{{ url | mask_api_key }}</td>
+</tr>
 {% endmacro %}
 <p class="meta">
   {{ preview.current_urls | length }} indexer(s) currently — {{ preview.new_urls | length }} after sync
 </p>
 {% if preview.added or preview.removed %}
+<div class="table-scroll">
 <table class="diff">
-  {% for url in preview.added %}<tr><td class="added">{{ idx_cell(url, preview.indexers_by_id, "+") }}</td></tr>{% endfor %}
-  {% for url in preview.removed %}<tr><td class="removed">{{ idx_cell(url, preview.indexers_by_id, "-") }}</td></tr>{% endfor %}
+  <thead>
+    <tr><th>Indexer</th><th>Privacy</th><th>ID</th><th>Added</th><th>URL</th></tr>
+  </thead>
+  <tbody>
+    {% for url in preview.added %}{{ idx_row(url, preview.indexers_by_id, "+", "added") }}{% endfor %}
+    {% for url in preview.removed %}{{ idx_row(url, preview.indexers_by_id, "-", "removed") }}{% endfor %}
+  </tbody>
 </table>
+</div>
 {% endif %}
 {% if preview.unchanged %}
 <p class="meta">Already synced ({{ preview.unchanged | length }}):</p>
+<div class="table-scroll">
 <table class="diff">
-  {% for url in preview.unchanged %}<tr><td>{{ idx_cell(url, preview.indexers_by_id, "") }}</td></tr>{% endfor %}
+  <thead>
+    <tr><th>Indexer</th><th>Privacy</th><th>ID</th><th>Added</th><th>URL</th></tr>
+  </thead>
+  <tbody>
+    {% for url in preview.unchanged %}{{ idx_row(url, preview.indexers_by_id, "", "") }}{% endfor %}
+  </tbody>
 </table>
+</div>
 {% endif %}
 {% if preview.current_urls == preview.new_urls %}
   <p class="notice">Already in sync, nothing to do.</p>
