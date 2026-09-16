@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 <span class="section-tag">03 · Logs</span>
-<h1 class="page-title">Logs cross-seed (temps réel)</h1>
+<h1 class="page-title">
+  Logs cross-seed
+  {% if selected_day == "current" %}(temps réel){% else %}— {{ selected_day }}{% endif %}
+</h1>
 
-<input type="text" id="log-filter" class="log-filter" placeholder="Filtrer...">
+<div class="log-controls">
+  <select id="log-day-select" class="log-day-select">
+    <option value="current" {% if selected_day == "current" %}selected{% endif %}>Aujourd'hui</option>
+    {% for d in available_days %}
+      <option value="{{ d }}" {% if d == selected_day %}selected{% endif %}>{{ d }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" id="log-filter" class="log-filter" placeholder="Filtrer...">
+</div>
 
 <div id="log-container" class="log-container">
   {% for entry in entries %}
@@ -15,6 +26,8 @@
   (function () {
     var container = document.getElementById("log-container");
     var filterInput = document.getElementById("log-filter");
+    var daySelect = document.getElementById("log-day-select");
+    var isCurrent = {{ "true" if selected_day == "current" else "false" }};
 
     function applyFilter() {
       var needle = filterInput.value.toLowerCase();
@@ -24,21 +37,28 @@
     }
     filterInput.addEventListener("input", applyFilter);
 
-    function isScrolledToBottom() {
-      return container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
-    }
+    daySelect.addEventListener("change", function () {
+      var value = daySelect.value;
+      window.location.href = value === "current" ? "/logs" : "/logs?day=" + encodeURIComponent(value);
+    });
 
-    container.scrollTop = container.scrollHeight;
-
-    var source = new EventSource("/logs/stream");
-    source.onmessage = function (event) {
-      var stickToBottom = isScrolledToBottom();
-      container.insertAdjacentHTML("beforeend", event.data);
-      applyFilter();
-      if (stickToBottom) {
-        container.scrollTop = container.scrollHeight;
+    if (isCurrent) {
+      function isScrolledToBottom() {
+        return container.scrollTop + container.clientHeight >= container.scrollHeight - 20;
       }
-    };
+
+      container.scrollTop = container.scrollHeight;
+
+      var source = new EventSource("/logs/stream");
+      source.onmessage = function (event) {
+        var stickToBottom = isScrolledToBottom();
+        container.insertAdjacentHTML("beforeend", event.data);
+        applyFilter();
+        if (stickToBottom) {
+          container.scrollTop = container.scrollHeight;
+        }
+      };
+    }
   })();
 </script>
 {% endblock %}

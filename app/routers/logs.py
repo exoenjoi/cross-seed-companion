@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import Settings
+from app.log_history import list_available_days, read_day_entries
 from app.log_paths import CURRENT_LOG_FILENAME, resolve_logs_dir
 from app.log_tailer import LogTailer, read_recent_entries
 
@@ -40,8 +41,19 @@ async def sse_log_stream(
 
 
 @router.get("/logs")
-def logs_page(request: Request):
+def logs_page(request: Request, day: str | None = None):
     settings = request.app.state.settings
+    logs_dir = resolve_logs_dir(settings)
+    available_days = list_available_days(logs_dir)
+
+    if day is not None and day in available_days:
+        entries = read_day_entries(logs_dir, day)
+        return templates.TemplateResponse(
+            request,
+            "logs.html",
+            {"entries": entries, "available_days": available_days, "selected_day": day},
+        )
+
     path = _current_log_path(settings)
     if not path.exists():
         return templates.TemplateResponse(
@@ -50,7 +62,11 @@ def logs_page(request: Request):
             {"message": f"Logs introuvables : {path}. Vérifiez le bind mount de logs/."},
         )
     entries = read_recent_entries(path, max_entries=200)
-    return templates.TemplateResponse(request, "logs.html", {"entries": entries})
+    return templates.TemplateResponse(
+        request,
+        "logs.html",
+        {"entries": entries, "available_days": available_days, "selected_day": "current"},
+    )
 
 
 @router.get("/logs/stream")

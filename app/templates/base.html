@@ -162,8 +162,12 @@
     }
     .ping-ok { color: var(--accent); }
     .ping-down { color: var(--danger); }
-    .log-filter {
-      width: 100%;
+    .log-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .log-filter, .log-day-select {
       font-family: var(--mono);
       font-size: 0.8rem;
       background: var(--bg-raised);
@@ -171,8 +175,8 @@
       color: var(--fg);
       padding: 0.5rem 0.7rem;
       border-radius: 3px;
-      margin-bottom: 1rem;
     }
+    .log-filter { flex: 1; }
     .log-container {
       height: 60vh;
       overflow-y: auto;
