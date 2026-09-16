@@ -47,7 +47,7 @@ class LogTailer:
                 self._pending = LogEntry(
                     timestamp=match["timestamp"],
                     level=match["level"],
-                    component=match["component"],
+                    component=match["component"] or "",
                     message=match["message"],
                 )
             elif self._pending is not None:

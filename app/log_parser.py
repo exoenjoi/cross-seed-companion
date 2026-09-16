@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 ENTRY_RE = re.compile(
     r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) "
-    r"(?P<level>\w+): \[(?P<component>[^\]]*)\] (?P<message>.*)$"
+    r"(?P<level>\w+): (?:\[(?P<component>[^\]]*)\] )?(?P<message>.*)$"
 )
 
 
@@ -24,7 +24,7 @@ def parse_log_lines(lines: list[str]) -> list[LogEntry]:
                 LogEntry(
                     timestamp=match["timestamp"],
                     level=match["level"],
-                    component=match["component"],
+                    component=match["component"] or "",
                     message=match["message"],
                 )
             )
