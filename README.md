@@ -21,7 +21,6 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 - [Quickstart](#quickstart)
 - [Configuration](#configuration)
 - [Security](#security)
-- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -40,9 +39,9 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   `subprocess`/shell involved: every action is a plain HTTP call with
   whitelist-only variable substitution.
 - **Real-time logs** — a `/logs` page streams cross-seed's `verbose.current.log`
-  live over Server-Sent Events, with a short backfill on load and a client-side
-  text filter. Shows only the current day's log (no browsing older rotated
-  files yet — see Roadmap).
+  live over Server-Sent Events, with a short backfill on load, a client-side
+  text filter, and level toggles (INFO/ERROR/...). A day picker lets you
+  switch to any already-rotated log file instead of the live current day.
 - **Added torrents** — a `/added` page lists torrents cross-seed has actually
   added to your torrent client (name, source tracker, date), parsed from
   every available `verbose.*.log` file — no qBittorrent connection needed
@@ -119,18 +118,6 @@ or your proxy's own basic auth), or restrict it to a private network/VPN.
 CSC's own hard design constraints (not just this feature's, the whole
 project's): no SSH, no Docker socket access, no shell/subprocess execution
 driven by user-supplied configuration.
-
-## Roadmap
-
-All planned features are shipped. No scheduled/automatic sync is planned —
-CSC never restarts cross-seed itself (see [Architecture](#architecture)), so
-a periodic sync without a restart to apply it wouldn't actually do anything.
-
-Browsing older, already-rotated log files on the `/logs` page itself (right
-now only `/added` reads them; `/logs`'s live view still shows only the
-current day) is a plausible future addition — the log parser was
-deliberately kept independent of the live-tailing code so it could be
-reused for that without a rewrite.
 
 ## Contributing
 
