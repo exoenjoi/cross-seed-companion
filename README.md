@@ -17,6 +17,7 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 ## Contents
 
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Quickstart](#quickstart)
 - [Configuration](#configuration)
@@ -56,6 +57,16 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   of the cross-seed container (set `TZ` there if you want local time). Parsed results are cached
   in memory per log file, so only the current day's log is re-read as it
   grows; the first load after a restart reads every available file.
+
+## Screenshots
+
+Sample data (release and tracker names are placeholders).
+
+| Actions | Added torrents |
+|---|---|
+| ![Actions page](docs/screenshots/actions.png) | ![Added torrents page](docs/screenshots/added.png) |
+
+![Live log viewer](docs/screenshots/logs.png)
 
 ## Architecture
 
