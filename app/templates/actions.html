@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <span class="section-tag">02 · Actions</span>
-<h1 class="page-title">Actions cross-seed</h1>
+<h1 class="page-title">cross-seed actions</h1>
 
 <div id="ping-badge" aria-live="polite" hx-get="/actions/ping" hx-trigger="load, every 15s" hx-swap="innerHTML">
   {% include "_ping_badge.html" %}

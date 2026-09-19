@@ -100,7 +100,7 @@ def test_sse_log_stream_yields_new_entries_then_stops_on_disconnect(tmp_path):
     current = tmp_path / "verbose.current.log"
     current.symlink_to(target)
     tailer = LogTailer(current)
-    tailer.read_new_entries()  # premier open, pointeur en fin de fichier (vide)
+    tailer.read_new_entries()  # first open, pointer at end of file (empty)
 
     with target.open("a") as f:
         f.write("2026-09-15 00:00:00.000 info: [scheduler] live entry\n")

@@ -57,7 +57,7 @@ def test_load_actions_file_parses_input_label(tmp_path):
 
     actions = load_actions_file(path)
 
-    assert actions[0].method == "POST"  # normalisé en majuscules
+    assert actions[0].method == "POST"  # normalized to uppercase
     assert actions[0].body is None
     assert actions[0].confirm is None
     assert actions[0].input_label == "InfoHash"
@@ -65,7 +65,7 @@ def test_load_actions_file_parses_input_label(tmp_path):
 
 def test_load_actions_file_raises_on_missing_required_field(tmp_path):
     path = tmp_path / "custom.yml"
-    path.write_text("- id: incomplete\n  title: \"Sans method ni url\"\n")
+    path.write_text("- id: incomplete\n  title: \"Missing method and url\"\n")
 
     with pytest.raises(ActionConfigError):
         load_actions_file(path)
@@ -226,7 +226,7 @@ def test_render_action_raises_when_input_used_but_not_provided():
     )
 
     with pytest.raises(MissingActionVariableError):
-        render_action(action, _settings())  # pas de user_input fourni
+        render_action(action, _settings())  # no user_input provided
 
 
 def test_render_action_leaves_non_string_body_values_untouched():

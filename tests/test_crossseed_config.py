@@ -136,7 +136,7 @@ def test_replace_torznab_block_normalizes_flat_array():
 
     assert '"http://prowlarr:9696/1/api?apikey=new"' in result
     assert "old" not in result
-    assert "delay: 30" in result  # le reste du fichier est préservé
+    assert "delay: 30" in result  # the rest of the file is preserved
 
 
 def test_replace_torznab_block_normalizes_map_style():

@@ -65,7 +65,7 @@ def test_log_tailer_only_returns_lines_appended_after_first_open(tmp_path):
     )
     tailer = LogTailer(current)
 
-    assert tailer.read_new_entries() == []  # rien de nouveau, l'ancien contenu n'est pas rejoué
+    assert tailer.read_new_entries() == []  # nothing new, old content is not replayed
 
     with target.open("a") as f:
         f.write("2026-09-15 00:00:01.000 info: [x] new entry\n")
@@ -81,11 +81,11 @@ def test_log_tailer_detects_symlink_rotation_and_flushes_pending_entry(tmp_path)
         tmp_path, "verbose.2026-09-14.log", "2026-09-14 23:59:00.000 info: [x] day1 entry\n"
     )
     tailer = LogTailer(current)
-    tailer.read_new_entries()  # premier open : pas de contenu ancien rejoué
+    tailer.read_new_entries()  # first open: old content is not replayed
 
     with day1.open("a") as f:
         f.write("2026-09-14 23:59:30.000 info: [x] last entry of day1\n")
-    assert tailer.read_new_entries() == []  # "last entry of day1" est en attente (pas encore refermée)
+    assert tailer.read_new_entries() == []  # "last entry of day1" is pending (not yet closed)
 
     day2 = tmp_path / "verbose.2026-09-15.log"
     day2.write_text("2026-09-15 00:00:00.000 info: [x] first entry of day2\n")
@@ -94,8 +94,8 @@ def test_log_tailer_detects_symlink_rotation_and_flushes_pending_entry(tmp_path)
 
     entries = tailer.read_new_entries()
 
-    # la rotation doit "libérer" l'entrée en attente de day1, même si day2 a déjà
-    # sa propre entrée qui reste elle-même en attente (pas encore refermée)
+    # rotation must "release" the pending entry of day1, even if day2 already
+    # has its own entry that is itself still pending (not yet closed)
     assert [e.message for e in entries] == ["last entry of day1"]
 
 
@@ -106,9 +106,9 @@ def test_log_tailer_flushes_unread_lines_from_outgoing_day_on_rotation(tmp_path)
         tmp_path, "verbose.2026-09-14.log", "2026-09-14 23:58:00.000 info: [x] backfill entry\n"
     )
     tailer = LogTailer(current)
-    tailer.read_new_entries()  # premier open : pas de contenu ancien rejoué
+    tailer.read_new_entries()  # first open: old content is not replayed
 
-    # Ces deux lignes n'ont jamais été lues par un poll intermédiaire.
+    # These two lines were never read by an intermediate poll.
     with day1.open("a") as f:
         f.write("2026-09-14 23:59:00.000 info: [x] last entry before rotation\n")
         f.write("2026-09-14 23:59:30.000 info: [x] closes the previous one\n")

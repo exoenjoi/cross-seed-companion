@@ -1,30 +1,30 @@
-# Exemple de fichier d'actions custom pour Cross-Seed Companion.
-# Montez ce fichier (ou une copie modifiée) dans le container et pointez
-# ACTIONS_CONFIG_PATH vers son chemin monté. Même schéma que les actions
-# intégrées :
-#   id, title, method, url          obligatoires
-#   body                            optionnel, envoyé en JSON
-#   headers                         optionnel, en-têtes HTTP (ex. X-Api-Key)
-#   confirm                         optionnel, demande de confirmation avant l'appel
-#   input_label                     optionnel, ajoute un champ texte libre passé comme ${INPUT}
-#   statuses                        optionnel, code HTTP -> message affiché à la place
-#                                   du corps brut de la réponse
+# Example custom actions file for Cross-Seed Companion.
+# Mount this file (or an edited copy) into the container and point
+# ACTIONS_CONFIG_PATH at its mounted path. Same schema as the built-in
+# actions:
+#   id, title, method, url          required
+#   body                            optional, sent as JSON
+#   headers                         optional, HTTP headers (e.g. X-Api-Key)
+#   confirm                         optional, asks for confirmation before the call
+#   input_label                     optional, adds a free-text field passed as ${INPUT}
+#   statuses                        optional, HTTP status code -> message shown
+#                                   instead of the raw response body
 #
-# Variables disponibles dans url/body/headers : ${CROSSSEED_URL},
+# Variables available in url/body/headers: ${CROSSSEED_URL},
 # ${CROSSSEED_API_KEY}, ${PROWLARR_URL}, ${PROWLARR_API_KEY}, ${INPUT}
-# (uniquement si input_label est défini). Toute autre variable fait échouer
-# l'action avec un message d'erreur explicite — jamais d'exécution shell,
-# jamais de code arbitraire.
-# ${INPUT} est encodé (URL-encoding) dans "url" et envoyé tel quel dans "body".
+# (only when input_label is set). Any other variable makes the action fail
+# with an explicit error message; there is never any shell execution or
+# arbitrary code.
+# ${INPUT} is URL-encoded inside "url" and sent as-is inside "body".
 #
-# Passez la clé API dans un en-tête X-Api-Key plutôt que dans l'URL
-# (?apikey=...) : elle n'apparaît alors pas dans les logs d'accès.
+# Pass the API key in an X-Api-Key header rather than in the URL
+# (?apikey=...): it then stays out of access logs.
 #
-# Toutes les options de l'API de cross-seed :
+# All options of cross-seed's API:
 # https://www.cross-seed.org/docs/reference/api
 
 - id: force-full-search-slow
-  title: "Recherche complète (variante custom)"
+  title: "Full search (custom variant)"
   method: POST
   url: "${CROSSSEED_URL}/api/job"
   headers:
@@ -32,14 +32,14 @@
   body:
     name: search
     ignoreExcludeOlder: true
-  confirm: "Exemple d'action custom : lance une recherche en ignorant les anciens torrents exclus. Confirmer ?"
+  confirm: "Custom action example: runs a search that ignores the older-torrent exclusion. Confirm?"
   statuses:
-    409: "Déjà en cours, ou trop proche du prochain passage planifié."
+    409: "Already running, or too close to the next scheduled run."
 
-# Le webhook accepte d'autres options (ignoreBlockList, includeNonVideos, ...) :
-# dupliquez une action et fixez-les dans le body.
+# The webhook accepts more options (ignoreBlockList, includeNonVideos, ...):
+# duplicate an action and set them in the body.
 - id: search-torrent-including-non-videos
-  title: "Recherche d'un torrent par infoHash (fichiers non vidéo inclus)"
+  title: "Search a torrent by infoHash (including non-video files)"
   method: POST
   url: "${CROSSSEED_URL}/api/webhook"
   headers:

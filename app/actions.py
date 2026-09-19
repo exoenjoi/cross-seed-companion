@@ -32,10 +32,10 @@ _REQUIRED_FIELDS = ("id", "title", "method", "url")
 
 def _parse_action(raw: dict) -> Action:
     if not isinstance(raw, dict):
-        raise ActionConfigError(f"Action invalide, mapping YAML attendu : {raw!r}")
+        raise ActionConfigError(f"Invalid action, expected a YAML mapping: {raw!r}")
     for key in _REQUIRED_FIELDS:
         if key not in raw:
-            raise ActionConfigError(f"Action invalide, champ '{key}' manquant : {raw}")
+            raise ActionConfigError(f"Invalid action, missing field '{key}': {raw}")
     if not isinstance(raw["method"], str):
         raise ActionConfigError(f"Action '{raw['id']}': the 'method' field must be a string.")
     headers = raw.get("headers")
@@ -65,15 +65,15 @@ def load_actions_file(path: Path) -> list[Action]:
     try:
         text = path.read_text()
     except OSError as exc:
-        raise ActionConfigError(f"Fichier d'actions illisible : {path} ({exc})") from exc
+        raise ActionConfigError(f"Unreadable actions file: {path} ({exc})") from exc
     try:
         raw = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        raise ActionConfigError(f"YAML invalide dans {path} : {exc}") from exc
+        raise ActionConfigError(f"Invalid YAML in {path}: {exc}") from exc
     if raw is None:
         raw = []
     if not isinstance(raw, list):
-        raise ActionConfigError(f"{path} doit contenir une liste YAML d'actions.")
+        raise ActionConfigError(f"{path} must contain a YAML list of actions.")
     return [_parse_action(item) for item in raw]
 
 

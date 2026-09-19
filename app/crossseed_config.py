@@ -108,7 +108,7 @@ def find_torznab_block(config_text: str) -> tuple[int, int]:
 
     map_match = _MAP_CALL_RE.match(config_text, array_end)
     if map_match:
-        call_open = map_match.end() - 1  # index du '(' d'ouverture
+        call_open = map_match.end() - 1  # index of the opening '('
         end = _find_matching(config_text, call_open, "(", ")")
 
     return array_start, end
