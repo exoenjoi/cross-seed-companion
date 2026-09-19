@@ -1,6 +1,6 @@
 import time
 
-from app.crossseed_events import CrossSeedEvent, extract_events, group_events_by_name
+from app.crossseed_events import CrossSeedEvent, Injection, extract_events, group_events
 from app.log_parser import LogEntry
 
 
@@ -25,6 +25,9 @@ def test_extract_events_matches_successful_injected_line():
             tracker="TrackerE",
             outcome="injected",
             component="rss",
+            candidate_hash="621d83e9",
+            source_name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
+            source_hash="7cf6d506",
         )
     ]
 
@@ -158,6 +161,9 @@ def test_extract_events_matches_line_with_trailing_continuation_line():
             tracker="TrackerE",
             outcome="injected",
             component="rss",
+            candidate_hash="621d83e9",
+            source_name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
+            source_hash="7cf6d506",
         )
     ]
 
@@ -186,51 +192,113 @@ def test_extract_events_returns_empty_list_for_no_entries():
     assert extract_events([]) == []
 
 
-def test_group_events_by_name_merges_same_torrent_across_trackers():
-    # Real-world shape: cross-seed injects the same torrent via multiple
-    # indexers, each producing its own event with an identical name.
-    events = [
-        CrossSeedEvent("2026-09-13 08:17:38.946", "Mickey.17.mkv", "TrackerD", "injected", "rss"),
-        CrossSeedEvent("2026-09-13 08:17:37.209", "Mickey.17.mkv", "G3mini (API)", "injected", "rss"),
-        CrossSeedEvent("2026-09-13 08:17:30.431", "Mickey.17.mkv", "TrackerD", "injected", "rss"),
-        CrossSeedEvent("2026-09-13 08:12:28.200", "Warfare.mkv", "TrackerD", "injected", "rss"),
-    ]
-
-    grouped = group_events_by_name(events)
-
-    assert [g.name for g in grouped] == ["Mickey.17.mkv", "Warfare.mkv"]
-    mickey = grouped[0]
-    assert mickey.timestamp == "2026-09-13 08:17:38.946"
-    assert mickey.trackers == ["TrackerD", "G3mini (API)"]
-
-
-def test_group_events_by_name_returns_empty_list_for_no_events():
-    assert group_events_by_name([]) == []
-
-
-def _match_entry(decision: str, source: str) -> LogEntry:
-    return LogEntry(
-        timestamp="2026-09-19 04:31:55.025",
+def test_extract_events_reads_candidate_and_source_identity():
+    entry = LogEntry(
+        timestamp="2026-09-19 18:44:33.674",
         level="info",
-        component="rss",
+        component="search",
         message=(
-            f"Found The Gorge (2025) [a843461f...] on TrackerF by {decision} from {source} "
-            "(The.Gorge.2025.mkv [9408ee53...@192.0.2.10:8090]) - injected"
+            "Found Example Movie (2024) Hybrid MULTi.mkv [1a1c96a6...] on TrackerD "
+            "by MATCH_SIZE_ONLY from torrentClient (Example Movie (2024) [72405bd8...@192.0.2.10:8090]) - injected"
         ),
     )
 
+    event = extract_events([entry])[0]
 
-def test_extract_events_matches_match_size_only_decision():
-    events = extract_events([_match_entry("MATCH_SIZE_ONLY", "torrentClient")])
-
-    assert [e.name for e in events] == ["The Gorge (2025)"]
-
-
-def test_extract_events_matches_virtual_source():
-    events = extract_events([_match_entry("MATCH", "virtual")])
-
-    assert [e.tracker for e in events] == ["TrackerF"]
+    assert (event.candidate_hash, event.source_name, event.source_hash) == (
+        "1a1c96a6",
+        "Example Movie (2024)",
+        "72405bd8",
+    )
 
 
-def test_extract_events_ignores_match_partial_decision():
-    assert extract_events([_match_entry("MATCH_PARTIAL", "torrentClient")]) == []
+def test_extract_events_handles_virtual_source_without_hash():
+    entry = LogEntry(
+        timestamp="2026-09-13 08:07:50.718",
+        level="info",
+        component="search",
+        message=(
+            "Found Kids.Show.S12E04.mkv [01e6dd4c...] on TrackerD by MATCH from virtual "
+            "(Kids.Show.S12.1080p-GROUP [@192.0.2.10:8090]) - injected"
+        ),
+    )
+
+    event = extract_events([entry])[0]
+
+    assert event.candidate_hash == "01e6dd4c"
+    assert event.source_hash == ""
+    assert event.source_name == "Kids.Show.S12.1080p-GROUP"
+
+
+def _event(ts, tracker, candidate, source, name="X", source_name="X", outcome="injected"):
+    return CrossSeedEvent(ts, name, tracker, outcome, "search", candidate, source_name, source)
+
+
+# Real Example Movie (2024) history from the logs: the TrackerF copy (72405bd8) later
+# served as the source for TrackerG and TrackerD, all from original 2efd6134.
+CONCLAVE = [
+    _event("2026-09-19 18:44:33.674", "TrackerD", "1a1c96a6", "72405bd8", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
+    _event("2026-09-19 18:44:32.829", "TrackerG (API)", "34c615d3", "72405bd8", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
+    _event("2026-09-19 17:31:55.662", "TrackerF", "72405bd8", "2efd6134", "Example Movie (2024)", "Example Movie (2024) Hybrid MULTi.mkv"),
+    _event("2026-09-05 13:31:04.328", "TrackerE", "b7a4a961", "2efd6134", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024) Hybrid MULTi.mkv"),
+]
+
+
+def test_group_events_links_copies_through_their_source_chain():
+    groups = group_events(CONCLAVE)
+
+    assert len(groups) == 1
+    conclave = groups[0]
+    assert conclave.name == "Example Movie (2024) Hybrid MULTi.mkv"  # the original torrent's name
+    assert conclave.timestamp == "2026-09-19 18:44:33.674"
+    assert conclave.injections == [
+        Injection("TrackerD", "2026-09-19 18:44:33.674", "injected"),
+        Injection("TrackerG (API)", "2026-09-19 18:44:32.829", "injected"),
+        Injection("TrackerF", "2026-09-19 17:31:55.662", "injected"),
+        Injection("TrackerE", "2026-09-05 13:31:04.328", "injected"),
+    ]
+
+
+def test_group_events_keeps_each_injection_date_separate():
+    v3x = next(i for i in group_events(CONCLAVE)[0].injections if i.tracker == "TrackerE")
+
+    assert v3x.timestamp == "2026-09-05 13:31:04.328"
+
+
+def test_group_events_does_not_merge_unrelated_torrents_sharing_a_name():
+    events = [
+        _event("2026-09-14 10:00:00.000", "TrackerA", "aaaaaaaa", "11111111", "Same.Name.mkv", "Original One.mkv"),
+        _event("2026-09-13 10:00:00.000", "TrackerB", "bbbbbbbb", "22222222", "Same.Name.mkv", "Original Two.mkv"),
+    ]
+
+    groups = group_events(events)
+
+    assert [g.name for g in groups] == ["Original One.mkv", "Original Two.mkv"]
+
+
+def test_group_events_treats_virtual_sources_as_separate_torrents():
+    events = [
+        _event("2026-09-13 08:07:51.120", "TrackerD", "f9a5b0b0", "", "Kids.Show.S12E08.mkv", "Kids.Show.S12.1080p-pack"),
+        _event("2026-09-13 08:07:50.718", "TrackerD", "01e6dd4c", "", "Kids.Show.S12E04.mkv", "Kids.Show.S12.1080p-pack"),
+    ]
+
+    groups = group_events(events)
+
+    assert [g.name for g in groups] == ["Kids.Show.S12E08.mkv", "Kids.Show.S12E04.mkv"]
+
+
+def test_group_events_orders_torrents_by_their_latest_injection():
+    events = [
+        _event("2026-09-19 10:00:00.000", "TrackerA", "aaaaaaaa", "11111111", source_name="One"),
+        _event("2026-09-18 10:00:00.000", "TrackerB", "bbbbbbbb", "22222222", source_name="Two"),
+        _event("2026-09-17 10:00:00.000", "TrackerC", "cccccccc", "11111111", source_name="One"),
+    ]
+
+    groups = group_events(events)
+
+    assert [g.name for g in groups] == ["One", "Two"]
+    assert [i.tracker for i in groups[0].injections] == ["TrackerA", "TrackerC"]
+
+
+def test_group_events_returns_empty_list_for_no_events():
+    assert group_events([]) == []

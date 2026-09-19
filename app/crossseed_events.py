@@ -3,9 +3,13 @@ from dataclasses import dataclass
 
 from app.log_parser import LogEntry
 
+# "Found <name> [<hash>...] on <tracker> by <decision> from <kind> (<source> [<hash>...@<client>]) - <outcome>"
+# The first hash is the torrent cross-seed created (unique per injection); the
+# second one is the torrent it was made from (empty for "virtual" season-pack sources).
 MATCH_RE = re.compile(
-    r"^Found (?P<name>.+?) \[[0-9a-fA-F]+\.\.\.\] on (?P<tracker>.+?) "
-    r"by (?:MATCH|MATCH_SIZE_ONLY) from \w+ \(.+?\) - (?P<outcome>.+)$"
+    r"^Found (?P<name>.+?) \[(?P<candidate_hash>[0-9a-fA-F]+)\.\.\.\] on (?P<tracker>.+?) "
+    r"by (?:MATCH|MATCH_SIZE_ONLY) from \w+ \((?P<source_name>.+?)"
+    r"(?: \[(?P<source_hash>[0-9a-fA-F]*)(?:\.\.\.)?@[^\]]*\])?\) - (?P<outcome>.+)$"
 )
 
 # Any line MATCH_RE can possibly match contains this substring — used to
@@ -28,14 +32,25 @@ class CrossSeedEvent:
     tracker: str
     outcome: str
     component: str
+    candidate_hash: str = ""
+    source_name: str = ""
+    source_hash: str = ""
+
+
+@dataclass
+class Injection:
+    tracker: str
+    timestamp: str
+    outcome: str
 
 
 @dataclass
 class GroupedEvent:
+    """One torrent (a family of cross-seeded copies) and every injection made for it."""
+
     name: str
-    timestamp: str
-    outcome: str
-    trackers: list[str]
+    timestamp: str  # latest injection
+    injections: list[Injection]
 
 
 def extract_events(entries: list[LogEntry]) -> list[CrossSeedEvent]:
@@ -51,28 +66,49 @@ def extract_events(entries: list[LogEntry]) -> list[CrossSeedEvent]:
                     tracker=match["tracker"],
                     outcome=match["outcome"],
                     component=entry.component,
+                    candidate_hash=match["candidate_hash"].lower(),
+                    source_name=match["source_name"],
+                    source_hash=(match["source_hash"] or "").lower(),
                 )
             )
     return events
 
 
-def group_events_by_name(events: list[CrossSeedEvent]) -> list[GroupedEvent]:
-    """Merge same-torrent events (one per indexer it was cross-seeded to)
-    into a single row. `events` must already be newest-first: the first
-    occurrence of a name sets the group's displayed timestamp/outcome."""
-    groups: dict[str, GroupedEvent] = {}
-    order: list[str] = []
+def group_events(events: list[CrossSeedEvent]) -> list[GroupedEvent]:
+    """Group injections of the same torrent, whatever their names or dates.
+
+    A torrent's identity is its lineage, not its name: every copy cross-seed
+    creates is linked to the torrent it was made from (candidate hash -> source
+    hash), and copies can themselves be the source of later ones. Chained
+    links form a family; each family is one row. `events` must be newest-first.
+    """
+    parent: dict[str, str] = {}
+
+    def find(h: str) -> str:
+        parent.setdefault(h, h)
+        while parent[h] != h:
+            parent[h] = parent[parent[h]]
+            h = parent[h]
+        return h
+
     for event in events:
-        group = groups.get(event.name)
-        if group is None:
-            group = GroupedEvent(
-                name=event.name,
-                timestamp=event.timestamp,
-                outcome=event.outcome,
-                trackers=[event.tracker],
+        if event.source_hash:
+            parent[find(event.candidate_hash)] = find(event.source_hash)
+
+    families: dict[str, list[CrossSeedEvent]] = {}
+    for event in events:
+        families.setdefault(find(event.candidate_hash), []).append(event)
+
+    groups = []
+    for members in families.values():
+        oldest = members[-1]
+        groups.append(
+            GroupedEvent(
+                # A copy of another torrent is named after its original (the
+                # oldest source we know of); a "virtual" source has no torrent of its own.
+                name=oldest.source_name if oldest.source_hash else oldest.name,
+                timestamp=members[0].timestamp,
+                injections=[Injection(e.tracker, e.timestamp, e.outcome) for e in members],
             )
-            groups[event.name] = group
-            order.append(event.name)
-        elif event.tracker not in group.trackers:
-            group.trackers.append(event.tracker)
-    return [groups[name] for name in order]
+        )
+    return groups

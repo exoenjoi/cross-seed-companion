@@ -54,7 +54,8 @@ def test_get_added_groups_same_torrent_across_trackers(tmp_path):
 
     assert response.status_code == 200
     assert "1 torrent(s) added" in response.text
-    assert "TrackerA, TrackerB" in response.text
+    assert "TrackerA" in response.text
+    assert "TrackerB" in response.text
 
 
 def test_get_added_shows_empty_state_when_no_events(tmp_path):
@@ -103,3 +104,20 @@ def test_get_added_refresh_shows_error_when_logs_missing(tmp_path):
 
     assert response.status_code == 200
     assert "Error" in response.text
+
+
+def test_get_added_keeps_each_injection_date_on_a_linked_torrent(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    (logs_dir / "verbose.2026-09-14.log").write_text(
+        "2026-09-05 13:31:04.328 info: [search] Found Movie.One.mkv [aaaaaaaa...] on TrackerA "
+        "by MATCH from torrentClient (Movie.One.mkv [cccccccc...@client]) - injected\n"
+        "2026-09-19 18:44:33.674 info: [search] Found Movie.One.mkv [bbbbbbbb...] on TrackerB "
+        "by MATCH from torrentClient (Movie.One.mkv [aaaaaaaa...@client]) - injected\n"
+    )
+
+    response = _client(logs_dir).get("/added")
+
+    assert "1 torrent(s) added" in response.text
+    assert "2026-09-05 13:31" in response.text
+    assert "2026-09-19 18:44" in response.text

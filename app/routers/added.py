@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from app.crossseed_events import group_events_by_name
+from app.crossseed_events import group_events
 from app.log_history import read_all_events
 from app.log_paths import resolve_logs_dir
 from app.templates import templates
@@ -13,7 +13,7 @@ def _load_grouped(request: Request):
     logs_dir = resolve_logs_dir(settings)
     if not logs_dir.exists():
         return None, f"Logs not found: {logs_dir}. Check the logs/ bind mount."
-    grouped = group_events_by_name(read_all_events(logs_dir))
+    grouped = group_events(read_all_events(logs_dir))
     return grouped, None
 
 

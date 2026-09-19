@@ -3,13 +3,17 @@
 {% else %}
 <p class="meta">{{ grouped | length }} torrent(s) added</p>
 <div class="added-list">
-  {% for event in grouped %}
+  {% for group in grouped %}
   <div class="added-row">
-    <span class="added-name">{{ event.name }}</span>
+    <span class="added-name">{{ group.name }}</span>
     <span class="added-meta">
-      <span class="log-time">{{ event.timestamp }}</span>
-      <span class="log-tag">{{ event.outcome }}</span>
-      <span class="log-component">{{ event.trackers | join(", ") }}</span>
+      {% for inj in group.injections %}
+      <span class="added-inj" data-day="{{ inj.timestamp[:10] }}" title="{{ inj.timestamp }} · {{ inj.outcome }}">
+        <span class="log-component">{{ inj.tracker }}</span>
+        <span class="log-time">{{ inj.timestamp[:16] }}</span>
+        {% if inj.outcome != "injected" %}<span class="log-tag">{{ inj.outcome }}</span>{% endif %}
+      </span>
+      {% endfor %}
     </span>
   </div>
   {% endfor %}

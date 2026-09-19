@@ -47,17 +47,22 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   live over Server-Sent Events, with a short backfill on load, a client-side
   text filter, and level toggles (INFO/ERROR/...). A day picker lets you
   switch to any already-rotated log file instead of the live current day.
-- **Added torrents** — a `/added` page lists torrents cross-seed has actually
-  added to your torrent client (name, source tracker, date, grouped per
-  torrent when it matched several indexers), parsed from every available
-  `verbose.*.log` file — no qBittorrent connection needed. Only lines
-  cross-seed itself marks as a genuine success (`injected`, or `saved` in
-  its save-only mode) count, for every match type (`MATCH`,
+- **Added torrents** — a `/added` page lists what cross-seed has actually
+  added to your torrent client, one row per torrent, parsed from every
+  available `verbose.*.log` file — no qBittorrent connection needed. For each
+  injection cross-seed logs the torrent it created and the torrent it was made
+  from; CSC follows those links, so all the copies of the same torrent are
+  grouped in one row (even when they are named differently on each tracker, or
+  were added on different days), with one entry per injection: tracker and
+  date. Only lines cross-seed itself marks as a genuine success (`injected`,
+  or `saved` in its save-only mode) count, for every match type (`MATCH`,
   `MATCH_SIZE_ONLY`); injection failures and "already exists" lines are
-  excluded. Timestamps are the ones in the log, so they follow the timezone
-  of the cross-seed container (set `TZ` there if you want local time). Parsed results are cached
-  in memory per log file, so only the current day's log is re-read as it
-  grows; the first load after a restart reads every available file.
+  excluded. Limits: history stops at the oldest log file you keep, a torrent
+  you removed from your client afterwards still appears, and timestamps follow
+  the timezone of the cross-seed container (set `TZ` there for local time).
+  Parsed results are cached in memory per log file, so only the current day's
+  log is re-read as it grows; the first load after a restart reads every
+  available file.
 
 ## Screenshots
 
