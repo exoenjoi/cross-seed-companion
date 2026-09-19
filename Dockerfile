@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# Set by CI to the release tag (or dev-<sha>); shown in the page footer.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 WORKDIR /app
 
 COPY requirements.txt .

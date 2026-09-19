@@ -353,6 +353,13 @@
       font-size: 0.78rem;
       color: var(--fg-dim);
     }
+    .app-footer {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--fg-dim);
+      padding: 0 1rem 1.5rem;
+    }
     @media (max-width: 640px) {
       header.topbar {
         flex-direction: column;
@@ -389,5 +396,6 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  <footer class="app-footer">Cross-Seed Companion {{ app_version() }}</footer>
 </body>
 </html>

@@ -20,6 +20,7 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Quickstart](#quickstart)
+- [Versions](#versions)
 - [Configuration](#configuration)
 - [Security](#security)
 - [Contributing](#contributing)
@@ -106,6 +107,22 @@ The image is built by GitHub Actions on every push to `main` and published to
 `ghcr.io/exoenjoi/cross-seed-companion`. To update: `docker compose pull && docker compose up -d`.
 
 Then open `http://<host>:8000/sync` — review the diff, confirm, restart cross-seed.
+
+## Versions
+
+Releases follow [semantic versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
+While the major version is `0`, minor releases may change configuration
+(environment variables, the actions YAML schema, action ids): check the
+[release notes](https://github.com/exoenjoi/cross-seed-companion/releases) before upgrading.
+
+| Image tag | What it is |
+|---|---|
+| `latest` | The most recent release |
+| `0.1.0` | That exact release (pin this for reproducible deployments) |
+| `0.1` | The latest patch of that minor version |
+| `edge` | The current `main` branch, may be unreleased or unstable |
+
+The running version is shown in the footer of every page.
 
 ## Configuration
 
