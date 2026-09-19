@@ -81,8 +81,11 @@ cp .env.example .env            # fill in your Prowlarr/cross-seed values
 cp docker-compose.example.yml docker-compose.yml
 # edit docker-compose.yml: point the volume at your real cross-seed config dir
 
-docker compose up -d --build
+docker compose up -d
 ```
+
+The image is built by GitHub Actions on every push to `main` and published to
+`ghcr.io/exoenjoi/cross-seed-companion`. To update: `docker compose pull && docker compose up -d`.
 
 Then open `http://<host>:8000/sync` — review the diff, confirm, restart cross-seed.
 

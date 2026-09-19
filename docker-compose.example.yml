@@ -1,7 +1,6 @@
 services:
   cross-seed-companion:
-    image: cross-seed-companion:latest
-    build: .
+    image: ghcr.io/exoenjoi/cross-seed-companion:latest
     ports:
       - "8000:8000"
     environment:
