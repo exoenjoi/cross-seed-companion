@@ -60,13 +60,15 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
 
 ## Screenshots
 
-Sample data (release and tracker names are placeholders).
+Sample data (indexer, tracker and release names, URLs and keys are placeholders).
 
-| Actions | Added torrents |
+| Sync | Actions |
 |---|---|
-| ![Actions page](docs/screenshots/actions.png) | ![Added torrents page](docs/screenshots/added.png) |
+| ![Indexer sync page](docs/screenshots/sync.png) | ![Actions page](docs/screenshots/actions.png) |
 
-![Live log viewer](docs/screenshots/logs.png)
+| Added torrents | Live logs |
+|---|---|
+| ![Added torrents page](docs/screenshots/added.png) | ![Live log viewer](docs/screenshots/logs.png) |
 
 ## Architecture
 
@@ -129,7 +131,7 @@ CSC has **no authentication and no CSRF protection built in, and none is
 planned** — that's deliberately out of scope; a reverse-proxy auth layer
 already does this well, and reimplementing it here would just be another
 attack surface. `POST /sync/apply` rewrites a real file on disk, and the
-diff view displays your Prowlarr API key in plain text. **Never expose this
+diff view shows the first 8 characters of each indexer's API key. **Never expose this
 port directly to the internet** — put it behind an authenticating reverse
 proxy (e.g. [Authentik](https://goauthentik.io/), [Authelia](https://www.authelia.com/),
 or your proxy's own basic auth), or restrict it to a private network/VPN.
