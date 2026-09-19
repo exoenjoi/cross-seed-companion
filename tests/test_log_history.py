@@ -162,3 +162,15 @@ def test_read_day_entries_tolerates_invalid_utf8(tmp_path):
     entries = read_day_entries(logs_dir, "2026-09-14")
 
     assert len(entries) == 1
+
+
+def test_read_all_events_picks_up_lines_appended_to_a_cached_file(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    day1 = logs_dir / "verbose.2026-09-14.log"
+    _write_match_line(day1, "2026-09-14 10:00:00.000", "Movie.One", "TrackerA")
+    assert [e.name for e in read_all_events(logs_dir)] == ["Movie.One"]
+
+    _write_match_line(day1, "2026-09-14 11:00:00.000", "Movie.Two", "TrackerA")
+
+    assert [e.name for e in read_all_events(logs_dir)] == ["Movie.Two", "Movie.One"]

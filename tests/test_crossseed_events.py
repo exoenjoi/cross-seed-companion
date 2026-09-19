@@ -206,3 +206,31 @@ def test_group_events_by_name_merges_same_torrent_across_trackers():
 
 def test_group_events_by_name_returns_empty_list_for_no_events():
     assert group_events_by_name([]) == []
+
+
+def _match_entry(decision: str, source: str) -> LogEntry:
+    return LogEntry(
+        timestamp="2026-09-19 04:31:55.025",
+        level="info",
+        component="rss",
+        message=(
+            f"Found The Gorge (2025) [a843461f...] on TrackerF by {decision} from {source} "
+            "(The.Gorge.2025.mkv [9408ee53...@192.0.2.10:8090]) - injected"
+        ),
+    )
+
+
+def test_extract_events_matches_match_size_only_decision():
+    events = extract_events([_match_entry("MATCH_SIZE_ONLY", "torrentClient")])
+
+    assert [e.name for e in events] == ["The Gorge (2025)"]
+
+
+def test_extract_events_matches_virtual_source():
+    events = extract_events([_match_entry("MATCH", "virtual")])
+
+    assert [e.tracker for e in events] == ["TrackerF"]
+
+
+def test_extract_events_ignores_match_partial_decision():
+    assert extract_events([_match_entry("MATCH_PARTIAL", "torrentClient")]) == []

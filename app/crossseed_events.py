@@ -5,13 +5,13 @@ from app.log_parser import LogEntry
 
 MATCH_RE = re.compile(
     r"^Found (?P<name>.+?) \[[0-9a-fA-F]+\.\.\.\] on (?P<tracker>.+?) "
-    r"by MATCH from torrentClient \(.+?\) - (?P<outcome>.+)$"
+    r"by (?:MATCH|MATCH_SIZE_ONLY) from \w+ \(.+?\) - (?P<outcome>.+)$"
 )
 
 # Any line MATCH_RE can possibly match contains this substring — used to
 # cheaply skip the vast majority of (irrelevant) log lines before the more
 # expensive per-line parsing in log_history.read_all_events.
-MATCH_MARKER = "by MATCH from torrentClient"
+MATCH_MARKER = " by MATCH"
 
 # Only these two outcomes are genuine successful additions — verified against
 # a real ~15-day log corpus. Every other outcome ("failed to inject,

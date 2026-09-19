@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 
 from app.crossseed_events import MATCH_MARKER, CrossSeedEvent, extract_events
@@ -36,6 +37,18 @@ def read_day_entries(logs_dir: Path, day: str) -> list[LogEntry]:
     return parse_log_lines(lines)
 
 
+@lru_cache(maxsize=256)
+def _file_events(path: Path, mtime_ns: int, size: int) -> tuple[CrossSeedEvent, ...]:
+    # mtime_ns/size are cache keys only: rotated logs never change, so only
+    # the current day's file is re-parsed when it grows.
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return ()
+    candidate_lines = [line for line in lines if MATCH_MARKER in line]
+    return tuple(extract_events(parse_log_lines(candidate_lines)))
+
+
 def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEvent]:
     events: list[CrossSeedEvent] = []
     # Newest file first, stopping once we have enough: bounds the amount of
@@ -43,12 +56,10 @@ def read_all_events(logs_dir: Path, max_events: int = 500) -> list[CrossSeedEven
     # the deployment has ever produced.
     for path in reversed(list_rotated_log_files(logs_dir)):
         try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+            stat = path.stat()
         except OSError:
             continue
-        candidate_lines = [line for line in lines if MATCH_MARKER in line]
-        entries = parse_log_lines(candidate_lines)
-        events.extend(extract_events(entries))
+        events.extend(_file_events(path, stat.st_mtime_ns, stat.st_size))
         if len(events) >= max_events:
             break
     events.sort(key=lambda event: event.timestamp, reverse=True)
