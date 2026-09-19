@@ -1,6 +1,6 @@
 import time
 
-from app.crossseed_events import CrossSeedEvent, Injection, extract_events, group_events
+from app.crossseed_events import CrossSeedEvent, DayEntry, DayGroup, Injection, extract_events, group_events
 from app.log_parser import LogEntry
 
 
@@ -302,3 +302,43 @@ def test_group_events_orders_torrents_by_their_latest_injection():
 
 def test_group_events_returns_empty_list_for_no_events():
     assert group_events([]) == []
+
+
+def test_days_groups_a_torrents_injections_by_day_newest_first():
+    days = group_events(CONCLAVE)[0].days
+
+    assert days == [
+        DayGroup(
+            "2026-09-19",
+            [
+                DayEntry("TrackerD", "18:44", "injected"),
+                DayEntry("TrackerG (API)", "18:44", "injected"),
+                DayEntry("TrackerF", "17:31", "injected"),
+            ],
+        ),
+        DayGroup("2026-09-05", [DayEntry("TrackerE", "13:31", "injected")]),
+    ]
+
+
+def test_days_collapses_identical_injections_into_a_count():
+    # Two different torrents injected on the same tracker in the same minute
+    # (real Reservoir Dogs case): shown once, with a count.
+    events = [
+        _event("2026-09-18 18:46:37.386", "TrackerD", "aaaaaaaa", "11111111", source_name="RD"),
+        _event("2026-09-18 18:46:30.492", "TrackerD", "bbbbbbbb", "11111111", source_name="RD"),
+    ]
+
+    entries = group_events(events)[0].days[0].entries
+
+    assert entries == [DayEntry("TrackerD", "18:46", "injected", count=2)]
+
+
+def test_days_keeps_same_tracker_apart_when_minutes_differ():
+    events = [
+        _event("2026-09-18 18:47:00.000", "TrackerD", "aaaaaaaa", "11111111", source_name="RD"),
+        _event("2026-09-18 18:46:00.000", "TrackerD", "bbbbbbbb", "11111111", source_name="RD"),
+    ]
+
+    entries = group_events(events)[0].days[0].entries
+
+    assert [(e.time, e.count) for e in entries] == [("18:47", 1), ("18:46", 1)]

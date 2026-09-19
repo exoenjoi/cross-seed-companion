@@ -26,8 +26,8 @@
     function refreshDateOptions() {
       var current = dateInput.value;
       var dates = new Set();
-      container.querySelectorAll(".added-inj").forEach(function (inj) {
-        dates.add(inj.dataset.day);
+      container.querySelectorAll(".added-day").forEach(function (day) {
+        dates.add(day.dataset.day);
       });
       var sorted = Array.from(dates).sort().reverse();
       dateInput.innerHTML = '<option value="">All dates</option>' + sorted.map(function (d) {
@@ -45,11 +45,11 @@
         var name = row.querySelector(".added-name").textContent.toLowerCase();
         var matchesName = needle === "" || name.includes(needle);
         // A torrent matches a day if any of its injections happened that day;
-        // the other injections are dimmed so the matching ones stand out.
+        // its other days are dimmed so the matching one stands out.
         var matchesDay = day === "";
-        row.querySelectorAll(".added-inj").forEach(function (inj) {
-          var onDay = day === "" || inj.dataset.day === day;
-          inj.classList.toggle("dim", !onDay);
+        row.querySelectorAll(".added-day").forEach(function (dayEl) {
+          var onDay = day === "" || dayEl.dataset.day === day;
+          dayEl.classList.toggle("dim", !onDay);
           if (onDay) matchesDay = true;
         });
         row.hidden = !(matchesName && matchesDay);

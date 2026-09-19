@@ -45,12 +45,42 @@ class Injection:
 
 
 @dataclass
+class DayEntry:
+    tracker: str
+    time: str  # HH:MM
+    outcome: str
+    count: int = 1  # identical injections (same tracker, minute and outcome) shown once
+
+
+@dataclass
+class DayGroup:
+    day: str  # YYYY-MM-DD
+    entries: list[DayEntry]
+
+
+@dataclass
 class GroupedEvent:
     """One torrent (a family of cross-seeded copies) and every injection made for it."""
 
     name: str
     timestamp: str  # latest injection
-    injections: list[Injection]
+    injections: list[Injection]  # newest first
+
+    @property
+    def days(self) -> list[DayGroup]:
+        days: list[DayGroup] = []
+        for injection in self.injections:
+            day, time = injection.timestamp[:10], injection.timestamp[11:16]
+            if not days or days[-1].day != day:
+                days.append(DayGroup(day, []))
+            entries = days[-1].entries
+            for entry in entries:
+                if (entry.tracker, entry.time, entry.outcome) == (injection.tracker, time, injection.outcome):
+                    entry.count += 1
+                    break
+            else:
+                entries.append(DayEntry(injection.tracker, time, injection.outcome))
+        return days
 
 
 def extract_events(entries: list[LogEntry]) -> list[CrossSeedEvent]:

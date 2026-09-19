@@ -2,20 +2,28 @@
 <p class="meta">No additions found in the available logs.</p>
 {% else %}
 <p class="meta">{{ grouped | length }} torrent(s) added</p>
-<div class="added-list">
+<ol class="added-list">
   {% for group in grouped %}
-  <div class="added-row">
-    <span class="added-name">{{ group.name }}</span>
-    <span class="added-meta">
-      {% for inj in group.injections %}
-      <span class="added-inj" data-day="{{ inj.timestamp[:10] }}" title="{{ inj.timestamp }} · {{ inj.outcome }}">
-        <span class="log-component">{{ inj.tracker }}</span>
-        <span class="log-time">{{ inj.timestamp[:16] }}</span>
-        {% if inj.outcome != "injected" %}<span class="log-tag">{{ inj.outcome }}</span>{% endif %}
-      </span>
+  <li class="added-row">
+    <p class="added-name">{{ group.name }}</p>
+    <dl class="added-days">
+      {% for day in group.days %}
+      <div class="added-day" data-day="{{ day.day }}">
+        <dt><time datetime="{{ day.day }}" title="{{ day.day }}">{{ day.day[5:] }}</time></dt>
+        <dd>
+          {% for entry in day.entries %}
+          <span class="added-inj">
+            <span class="added-tracker">{{ entry.tracker }}</span>
+            {% if entry.count > 1 %}<span class="added-count">×{{ entry.count }}</span>{% endif %}
+            <span class="added-time">{{ entry.time }}</span>
+            {% if entry.outcome != "injected" %}<span class="added-outcome">{{ entry.outcome }}</span>{% endif %}
+          </span>
+          {% endfor %}
+        </dd>
+      </div>
       {% endfor %}
-    </span>
-  </div>
+    </dl>
+  </li>
   {% endfor %}
-</div>
+</ol>
 {% endif %}

@@ -119,5 +119,23 @@ def test_get_added_keeps_each_injection_date_on_a_linked_torrent(tmp_path):
     response = _client(logs_dir).get("/added")
 
     assert "1 torrent(s) added" in response.text
-    assert "2026-09-05 13:31" in response.text
-    assert "2026-09-19 18:44" in response.text
+    assert 'data-day="2026-09-05"' in response.text
+    assert 'data-day="2026-09-19"' in response.text
+    assert "13:31" in response.text
+    assert "18:44" in response.text
+
+
+def test_get_added_shows_a_count_for_identical_injections(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    (logs_dir / "verbose.2026-09-14.log").write_text(
+        "".join(
+            f"2026-09-14 10:00:0{n}.000 info: [search] Found Movie.One.mkv [{h}...] on TrackerA "
+            "by MATCH from torrentClient (Movie.One.mkv [cccccccc...@client]) - injected\n"
+            for n, h in enumerate(("aaaaaaaa", "bbbbbbbb"))
+        )
+    )
+
+    response = _client(logs_dir).get("/added")
+
+    assert "\u00d72" in response.text
