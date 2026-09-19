@@ -61,7 +61,10 @@ def actions_run(request: Request, action_id: str, input: str | None = Form(None)
         return templates.TemplateResponse(request, "_action_result.html", {"ok": False, "message": str(exc)})
 
     message = f"{action.title} → HTTP {result.status_code}"
-    if not result.ok and result.body:
+    hint = (action.statuses or {}).get(result.status_code)
+    if hint:
+        message = f"{message}\n{hint}"
+    elif not result.ok and result.body:
         message = f"{message}\n{result.body}"
     return templates.TemplateResponse(
         request,

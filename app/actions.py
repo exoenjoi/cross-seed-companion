@@ -1,4 +1,5 @@
 import re
+from urllib.parse import quote
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +23,8 @@ class Action:
     body: dict | None
     confirm: str | None
     input_label: str | None
+    headers: dict | None = None
+    statuses: dict[int, str] | None = None
 
 
 _REQUIRED_FIELDS = ("id", "title", "method", "url")
@@ -35,6 +38,16 @@ def _parse_action(raw: dict) -> Action:
             raise ActionConfigError(f"Action invalide, champ '{key}' manquant : {raw}")
     if not isinstance(raw["method"], str):
         raise ActionConfigError(f"Action '{raw['id']}': the 'method' field must be a string.")
+    headers = raw.get("headers")
+    if headers is not None and not isinstance(headers, dict):
+        raise ActionConfigError(f"Action '{raw['id']}': 'headers' must be a mapping.")
+    statuses = raw.get("statuses")
+    if statuses is not None and not (
+        isinstance(statuses, dict) and all(isinstance(code, int) for code in statuses)
+    ):
+        raise ActionConfigError(
+            f"Action '{raw['id']}': 'statuses' must map HTTP status codes (numbers) to a message."
+        )
     return Action(
         id=raw["id"],
         title=raw["title"],
@@ -43,6 +56,8 @@ def _parse_action(raw: dict) -> Action:
         body=raw.get("body"),
         confirm=raw.get("confirm"),
         input_label=raw.get("input_label"),
+        headers=headers,
+        statuses=statuses,
     )
 
 
@@ -136,8 +151,20 @@ def render_action(
     user_input: str | None = None,
 ) -> tuple[str, str, dict | None]:
     variables = _available_variables(settings, user_input)
-    url = _substitute(action.url, variables)
+    url_variables = dict(variables)
+    if "INPUT" in url_variables:
+        url_variables["INPUT"] = quote(url_variables["INPUT"], safe="")
+    url = _substitute(action.url, url_variables)
     body = None
     if action.body is not None:
         body = _substitute_value(action.body, variables)
     return action.method, url, body
+
+
+def render_headers(
+    action: Action,
+    settings: Settings,
+    user_input: str | None = None,
+) -> dict[str, str]:
+    variables = _available_variables(settings, user_input)
+    return _substitute_value(action.headers or {}, variables)

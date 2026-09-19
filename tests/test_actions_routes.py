@@ -27,7 +27,7 @@ def test_get_actions_lists_builtin_actions():
 
     assert response.status_code == 200
     assert "Run a search" in response.text
-    assert "Notify an infoHash" in response.text
+    assert "Search a torrent by infoHash" in response.text
 
 
 def test_get_actions_shows_error_when_custom_file_invalid(tmp_path):
@@ -106,3 +106,34 @@ def test_get_actions_ping_reflects_health(monkeypatch):
 
     assert response.status_code == 200
     assert "online" in response.text
+
+
+def test_post_run_action_shows_custom_message_for_a_documented_status(monkeypatch):
+    from app import action_runner
+
+    def fake_run_action(action, settings, user_input=None, transport=None):
+        return action_runner.ActionResult(ok=False, status_code=409, body='{"raw":"noise"}')
+
+    monkeypatch.setattr(actions_router, "run_action", fake_run_action)
+    client = _client()
+
+    response = client.post("/actions/search/run")
+
+    assert "HTTP 409" in response.text
+    assert "already running" in response.text.lower()
+    assert "noise" not in response.text
+
+
+def test_post_run_action_keeps_raw_body_for_undocumented_failure(monkeypatch):
+    from app import action_runner
+
+    def fake_run_action(action, settings, user_input=None, transport=None):
+        return action_runner.ActionResult(ok=False, status_code=500, body="boom")
+
+    monkeypatch.setattr(actions_router, "run_action", fake_run_action)
+    client = _client()
+
+    response = client.post("/actions/search/run")
+
+    assert "HTTP 500" in response.text
+    assert "boom" in response.text

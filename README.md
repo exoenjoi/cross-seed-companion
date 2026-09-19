@@ -30,10 +30,13 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
   and a timestamped backup before any write. Optionally exclude public trackers
   and/or indexers carrying a specific Prowlarr tag.
-- **Declarative actions** — trigger cross-seed's job API (search, full search,
-  cleanup, RSS, indexer-cap refresh, notify by infoHash) from a `/actions` page,
-  plus a live cross-seed health badge. Extensible via an optional custom YAML
-  file (`ACTIONS_CONFIG_PATH`, see
+- **Declarative actions** — trigger cross-seed's API from an `/actions` page: its
+  jobs (search, full search, inject, cleanup, RSS, indexer-cap refresh) and a
+  search for one specific torrent by infoHash or path (its webhook endpoint),
+  with readable messages for the status codes cross-seed documents (job
+  disabled, already running), plus a live cross-seed health badge. The API key
+  is sent as an `X-Api-Key` header, never in the URL. Extensible via an
+  optional custom YAML file (`ACTIONS_CONFIG_PATH`, see
   [`examples/custom-actions.example.yml`](./examples/custom-actions.example.yml))
   using the same schema as the built-in actions — no code changes, and no
   `subprocess`/shell involved: every action is a plain HTTP call with
@@ -43,15 +46,16 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   text filter, and level toggles (INFO/ERROR/...). A day picker lets you
   switch to any already-rotated log file instead of the live current day.
 - **Added torrents** — a `/added` page lists torrents cross-seed has actually
-  added to your torrent client (name, source tracker, date), parsed from
-  every available `verbose.*.log` file — no qBittorrent connection needed
-  (the "saved" outcome, for cross-seed's alternate save-only mode, is
-  included by the same rule but hasn't been exercised against a real log
-  sample — only "injected" has). Only lines cross-seed itself marks as a
-  genuine success count; injection failures and "already exists" lines are
-  excluded. Reads every available log file on each page load (no caching, no
-  database) — fine for typical retention windows, but page-load time scales
-  with total log volume if you keep a very large number of days.
+  added to your torrent client (name, source tracker, date, grouped per
+  torrent when it matched several indexers), parsed from every available
+  `verbose.*.log` file — no qBittorrent connection needed. Only lines
+  cross-seed itself marks as a genuine success (`injected`, or `saved` in
+  its save-only mode) count, for every match type (`MATCH`,
+  `MATCH_SIZE_ONLY`); injection failures and "already exists" lines are
+  excluded. Timestamps are the ones in the log, so they follow the timezone
+  of the cross-seed container (set `TZ` there if you want local time). Parsed results are cached
+  in memory per log file, so only the current day's log is re-read as it
+  grows; the first load after a restart reads every available file.
 
 ## Architecture
 
@@ -73,13 +77,14 @@ Dockge, etc.).
 
 ## Quickstart
 
-```bash
-git clone https://github.com/exoenjoi/cross-seed-companion.git
-cd cross-seed-companion
+Prerequisites: a running [cross-seed](https://www.cross-seed.org/) on the
+same Docker host, and [Prowlarr](https://prowlarr.com/) reachable over HTTP.
 
-cp .env.example .env            # fill in your Prowlarr/cross-seed values
-cp docker-compose.example.yml docker-compose.yml
-# edit docker-compose.yml: point the volume at your real cross-seed config dir
+```bash
+curl -O https://raw.githubusercontent.com/exoenjoi/cross-seed-companion/main/docker-compose.example.yml
+mv docker-compose.example.yml docker-compose.yml
+# edit docker-compose.yml: API keys, URLs, and the volume pointing at your
+# real cross-seed config directory (the one containing config.js and logs/)
 
 docker compose up -d
 ```

@@ -9,6 +9,7 @@ from app.actions import (
     load_actions_file,
     load_all_actions,
     load_builtin_actions,
+    render_headers,
 )
 
 
@@ -121,11 +122,11 @@ def test_load_all_actions_raises_on_duplicate_id_with_builtin(tmp_path):
         load_all_actions(custom_path)
 
 
-def test_load_builtin_actions_has_six_actions_with_unique_ids():
+def test_load_builtin_actions_have_unique_ids():
     actions = load_builtin_actions()
 
-    assert len(actions) == 6
-    assert len(set(a.id for a in actions)) == 6
+    assert len(actions) > 0
+    assert len(set(a.id for a in actions)) == len(actions)
 
 
 def test_load_all_actions_merges_builtin_and_custom(tmp_path):
@@ -134,14 +135,14 @@ def test_load_all_actions_merges_builtin_and_custom(tmp_path):
 
     actions = load_all_actions(custom_path)
 
-    assert len(actions) == 7  # 6 builtin + 1 custom
+    assert len(actions) == len(load_builtin_actions()) + 1
     assert find_action(actions, "my-custom") is not None
 
 
 def test_load_all_actions_without_custom_path_returns_only_builtin():
     actions = load_all_actions(None)
 
-    assert len(actions) == 6
+    assert len(actions) == len(load_builtin_actions())
 
 
 def test_find_action_returns_none_when_not_found():
@@ -344,3 +345,105 @@ def test_example_custom_actions_file_parses():
 
     assert len(actions) >= 1
     assert all(a.method in ("GET", "POST", "PUT", "DELETE", "PATCH") for a in actions)
+
+
+def _write_yaml(tmp_path, text: str) -> Path:
+    path = tmp_path / "actions.yml"
+    path.write_text(text)
+    return path
+
+
+def test_load_actions_file_reads_headers_and_statuses(tmp_path):
+    path = _write_yaml(
+        tmp_path,
+        """
+- id: a
+  title: A
+  method: POST
+  url: "${CROSSSEED_URL}/api/job"
+  headers:
+    X-Api-Key: "${CROSSSEED_API_KEY}"
+  statuses:
+    409: "Already running"
+""",
+    )
+
+    action = load_actions_file(path)[0]
+
+    assert action.headers == {"X-Api-Key": "${CROSSSEED_API_KEY}"}
+    assert action.statuses == {409: "Already running"}
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "headers: [not, a, mapping]",
+        "statuses: [not, a, mapping]",
+        "statuses:\n    not-a-number: text",
+    ],
+)
+def test_load_actions_file_rejects_malformed_headers_or_statuses(tmp_path, extra):
+    path = _write_yaml(
+        tmp_path,
+        f"- id: a\n  title: A\n  method: POST\n  url: http://x\n  {extra}\n",
+    )
+
+    with pytest.raises(ActionConfigError):
+        load_actions_file(path)
+
+
+def test_render_headers_substitutes_variables():
+    action = Action(
+        id="a",
+        title="A",
+        method="POST",
+        url="${CROSSSEED_URL}/api/job",
+        body=None,
+        confirm=None,
+        input_label=None,
+        headers={"X-Api-Key": "${CROSSSEED_API_KEY}"},
+    )
+
+    assert render_headers(action, _settings()) == {"X-Api-Key": "cs-key"}
+
+
+def test_render_headers_is_empty_without_headers():
+    action = Action("a", "A", "GET", "http://x", None, None, None)
+
+    assert render_headers(action, _settings()) == {}
+
+
+def test_render_action_url_encodes_input_in_url_but_not_in_body():
+    action = Action(
+        id="a",
+        title="A",
+        method="POST",
+        url="${CROSSSEED_URL}/api/x?q=${INPUT}",
+        body={"path": "${INPUT}"},
+        confirm=None,
+        input_label="Query",
+    )
+
+    _, url, body = render_action(action, _settings(), user_input="a b&c#d")
+
+    assert url == "http://cross-seed:2468/api/x?q=a%20b%26c%23d"
+    assert body == {"path": "a b&c#d"}
+
+
+def test_builtin_actions_pass_the_api_key_as_a_header_not_in_the_url():
+    for action in load_builtin_actions():
+        assert "apikey" not in action.url, action.id
+        assert action.headers == {"X-Api-Key": "${CROSSSEED_API_KEY}"}, action.id
+
+
+def test_builtin_actions_cover_every_documented_job_and_the_webhook():
+    ids = {action.id for action in load_builtin_actions()}
+
+    assert {"search", "cleanup", "rss", "update-indexer-caps", "inject"} <= ids
+    assert {"search-torrent", "search-path"} <= ids
+
+
+def test_builtin_job_actions_explain_404_and_409():
+    for action in load_builtin_actions():
+        if action.url.endswith("/api/job"):
+            assert {404, 409} <= set(action.statuses or {}), action.id

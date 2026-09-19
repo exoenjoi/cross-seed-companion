@@ -1,21 +1,50 @@
 # Exemple de fichier d'actions custom pour Cross-Seed Companion.
 # Montez ce fichier (ou une copie modifiée) dans le container et pointez
 # ACTIONS_CONFIG_PATH vers son chemin monté. Même schéma que les actions
-# intégrées : id, title, method, url, body (optionnel), confirm (optionnel),
-# input_label (optionnel, ajoute un champ texte libre passé comme ${INPUT}).
+# intégrées :
+#   id, title, method, url          obligatoires
+#   body                            optionnel, envoyé en JSON
+#   headers                         optionnel, en-têtes HTTP (ex. X-Api-Key)
+#   confirm                         optionnel, demande de confirmation avant l'appel
+#   input_label                     optionnel, ajoute un champ texte libre passé comme ${INPUT}
+#   statuses                        optionnel, code HTTP -> message affiché à la place
+#                                   du corps brut de la réponse
 #
-# Variables disponibles dans url/body : ${CROSSSEED_URL}, ${CROSSSEED_API_KEY},
-# ${PROWLARR_URL}, ${PROWLARR_API_KEY}, ${INPUT} (uniquement si input_label
-# est défini). Toute autre variable fait échouer l'action avec un message
-# d'erreur explicite — jamais d'exécution shell, jamais de code arbitraire.
-# ${INPUT} n'est pas encodé pour une URL : utilisez-le dans "body", pas dans
-# "url" (un espace, un "&" ou un "#" dans la valeur saisie casserait l'URL).
+# Variables disponibles dans url/body/headers : ${CROSSSEED_URL},
+# ${CROSSSEED_API_KEY}, ${PROWLARR_URL}, ${PROWLARR_API_KEY}, ${INPUT}
+# (uniquement si input_label est défini). Toute autre variable fait échouer
+# l'action avec un message d'erreur explicite — jamais d'exécution shell,
+# jamais de code arbitraire.
+# ${INPUT} est encodé (URL-encoding) dans "url" et envoyé tel quel dans "body".
+#
+# Passez la clé API dans un en-tête X-Api-Key plutôt que dans l'URL
+# (?apikey=...) : elle n'apparaît alors pas dans les logs d'accès.
+#
+# Toutes les options de l'API de cross-seed :
+# https://www.cross-seed.org/docs/reference/api
 
 - id: force-full-search-slow
   title: "Recherche complète (variante custom)"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers:
+    X-Api-Key: "${CROSSSEED_API_KEY}"
   body:
     name: search
     ignoreExcludeOlder: true
   confirm: "Exemple d'action custom : lance une recherche en ignorant les anciens torrents exclus. Confirmer ?"
+  statuses:
+    409: "Déjà en cours, ou trop proche du prochain passage planifié."
+
+# Le webhook accepte d'autres options (ignoreBlockList, includeNonVideos, ...) :
+# dupliquez une action et fixez-les dans le body.
+- id: search-torrent-including-non-videos
+  title: "Recherche d'un torrent par infoHash (fichiers non vidéo inclus)"
+  method: POST
+  url: "${CROSSSEED_URL}/api/webhook"
+  headers:
+    X-Api-Key: "${CROSSSEED_API_KEY}"
+  body:
+    infoHash: "${INPUT}"
+    includeNonVideos: true
+  input_label: "Torrent infoHash"

@@ -1,50 +1,89 @@
+# All built-in actions send the API key as an X-Api-Key header (documented by
+# cross-seed) rather than in the URL, so it never lands in access logs.
+# `statuses` replaces the raw response body with a readable message for the
+# codes cross-seed documents for POST /api/job.
+
 - id: search
   title: "Run a search"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers: &auth
+    X-Api-Key: "${CROSSSEED_API_KEY}"
   body:
     name: search
   confirm: "Run a cross-seed search on eligible torrents?"
+  statuses: &job_statuses
+    404: "This job is disabled in cross-seed's config."
+    409: "Already running, or the next scheduled run is too close."
 
 - id: search-full
   title: "Full search (ignores exclusions)"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers: *auth
   body:
     name: search
     ignoreExcludeRecentSearch: true
     ignoreExcludeOlder: true
   confirm: "Run a full search ignoring the usual exclusions? This can be heavier on indexers."
+  statuses: *job_statuses
 
-- id: notify
-  title: "Notify an infoHash"
+- id: search-torrent
+  title: "Search a torrent by infoHash"
   method: POST
-  url: "${CROSSSEED_URL}/api/webhook?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/webhook"
+  headers: *auth
   body:
     infoHash: "${INPUT}"
   input_label: "Torrent infoHash"
-  confirm: "Notify cross-seed for this infoHash?"
+  confirm: "Search all your indexers for this torrent?"
+
+- id: search-path
+  title: "Search a torrent by path"
+  method: POST
+  url: "${CROSSSEED_URL}/api/webhook"
+  headers: *auth
+  body:
+    path: "${INPUT}"
+  input_label: "Path to the torrent data, as cross-seed sees it"
+  confirm: "Search all your indexers for the torrent at this path?"
+
+- id: inject
+  title: "Inject saved torrents"
+  method: POST
+  url: "${CROSSSEED_URL}/api/job"
+  headers: *auth
+  body:
+    name: inject
+  confirm: "Retry injecting the torrent files cross-seed saved but could not add to your client?"
+  statuses: *job_statuses
 
 - id: cleanup
   title: "Cleanup"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers: *auth
   body:
     name: cleanup
   confirm: "Run the cross-seed cleanup job?"
+  statuses: *job_statuses
 
 - id: rss
   title: "RSS"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers: *auth
   body:
     name: rss
   confirm: "Run a cross-seed RSS scan?"
+  statuses: *job_statuses
 
 - id: update-indexer-caps
   title: "Update indexer capabilities"
   method: POST
-  url: "${CROSSSEED_URL}/api/job?apikey=${CROSSSEED_API_KEY}"
+  url: "${CROSSSEED_URL}/api/job"
+  headers: *auth
   body:
     name: updateIndexerCaps
   confirm: "Refresh indexer capabilities from cross-seed?"
+  statuses: *job_statuses

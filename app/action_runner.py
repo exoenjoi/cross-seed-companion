@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import httpx
 
-from app.actions import Action, render_action
+from app.actions import Action, render_action, render_headers
 from app.config import Settings
 
 
@@ -21,12 +21,14 @@ def run_action(
     transport: httpx.BaseTransport | None = None,
 ) -> ActionResult:
     method, url, body = render_action(action, settings, user_input)
+    headers = render_headers(action, settings, user_input)
     with httpx.Client(transport=transport, timeout=15.0) as client:
         if body is not None:
             content = json.dumps(body, separators=(',', ':'))
-            response = client.request(method, url, content=content, headers={"content-type": "application/json"})
+            headers = {**headers, "content-type": "application/json"}
+            response = client.request(method, url, content=content, headers=headers)
         else:
-            response = client.request(method, url)
+            response = client.request(method, url, headers=headers)
     return ActionResult(ok=response.is_success, status_code=response.status_code, body=response.text)
 
 

@@ -102,3 +102,25 @@ def test_ping_crossseed_returns_false_on_connection_error():
         raise httpx.ConnectError("refused", request=request)
 
     assert ping_crossseed(_settings(), transport=httpx.MockTransport(handler)) is False
+
+
+def test_run_action_sends_configured_headers():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.headers["x-api-key"] == "cs-key"
+        assert request.headers["content-type"] == "application/json"
+        return httpx.Response(200)
+
+    action = Action(
+        id="search",
+        title="Search",
+        method="POST",
+        url="${CROSSSEED_URL}/api/job",
+        body={"name": "search"},
+        confirm=None,
+        input_label=None,
+        headers={"X-Api-Key": "${CROSSSEED_API_KEY}"},
+    )
+
+    result = run_action(action, _settings(), transport=httpx.MockTransport(handler))
+
+    assert result.ok is True

@@ -12,7 +12,7 @@ services:
       PROWLARR_URL: "http://prowlarr:9696"
       PROWLARR_API_KEY: "changeme"
       # Required at startup and used by the actions feature
-      # (built-in search/notify actions call the cross-seed API using these).
+      # (built-in actions call the cross-seed API using these).
       CROSSSEED_URL: "http://cross-seed:2468"
       CROSSSEED_API_KEY: "changeme"
       CROSSSEED_CONFIG_PATH: "/crossseed-config"
