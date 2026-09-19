@@ -48,6 +48,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: APP_VERSION=${{ steps.version.outputs.value }}
+          # No provenance attestation: it adds untagged child manifests that the
+          # cleanup job below could mistake for garbage and delete, breaking the tagged image.
+          provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -64,3 +67,6 @@ jobs:
           package-type: container
           min-versions-to-keep: 5
           delete-only-untagged-versions: true
+          # Children (amd64 image + attestation) of v0.1.0, built before provenance was
+          # disabled. Remove this line once 0.1.0 is retired.
+          ignore-versions: '^sha256:(80af749eba68|ae189829cef9)'
