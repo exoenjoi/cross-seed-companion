@@ -64,3 +64,4 @@ jobs:
           package-type: container
           min-versions-to-keep: 5
           delete-only-untagged-versions: true
+          num-old-versions-to-delete: 20
