@@ -28,6 +28,7 @@ def test_get_actions_lists_builtin_actions():
     assert response.status_code == 200
     assert "Run a search" in response.text
     assert "Search a torrent by infoHash" in response.text
+    assert "Update indexer capabilities" in response.text
 
 
 def test_get_actions_shows_error_when_custom_file_invalid(tmp_path):

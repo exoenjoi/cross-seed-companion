@@ -85,5 +85,5 @@
   headers: *auth
   body:
     name: updateIndexerCaps
-  confirm: "Refresh indexer capabilities from cross-seed?"
+  confirm: "Ask every indexer again which searches it supports (media types, categories, ID search)? cross-seed already does this on its own schedule, and indexers may rate-limit repeated requests."
   statuses: *job_statuses
