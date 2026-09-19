@@ -15,7 +15,11 @@
   </select>
   <input type="text" id="log-filter" class="log-filter" placeholder="Filter...">
 </div>
-<div id="log-level-filters" class="log-level-filters"></div>
+<div class="log-level-row">
+  <span class="log-level-label">Level</span>
+  <div id="log-level-filters" class="log-level-filters"></div>
+  <span id="log-level-hint" class="log-level-hint">all levels shown</span>
+</div>
 
 <div id="log-container" class="log-container">
   {% if entries %}
@@ -37,7 +41,9 @@
     var isCurrent = {{ "true" if selected_day == "current" else "false" }};
 
     var emptyNotice = document.getElementById("log-filter-empty");
-    var disabledLevels = new Set();
+    var levelHint = document.getElementById("log-level-hint");
+    // No level selected = show every level; selecting levels narrows the view to them.
+    var selectedLevels = new Set();
 
     function lineLevel(line) {
       var match = /log-level-(\S+)/.exec(line.className);
@@ -48,15 +54,17 @@
       if (!level || levelFilters.querySelector('[data-level="' + level + '"]')) return;
       var chip = document.createElement("button");
       chip.type = "button";
-      chip.className = "level-chip active";
+      chip.className = "level-chip";
+      chip.setAttribute("aria-pressed", "false");
       chip.dataset.level = level;
       chip.textContent = level;
       chip.addEventListener("click", function () {
-        chip.classList.toggle("active");
-        if (chip.classList.contains("active")) {
-          disabledLevels.delete(level);
+        var selected = chip.classList.toggle("active");
+        chip.setAttribute("aria-pressed", String(selected));
+        if (selected) {
+          selectedLevels.add(level);
         } else {
-          disabledLevels.add(level);
+          selectedLevels.delete(level);
         }
         applyFilter();
       });
@@ -69,10 +77,11 @@
       var visibleCount = 0;
       lines.forEach(function (line) {
         var matchesText = needle === "" || line.textContent.toLowerCase().includes(needle);
-        var matchesLevel = !disabledLevels.has(lineLevel(line));
+        var matchesLevel = selectedLevels.size === 0 || selectedLevels.has(lineLevel(line));
         line.hidden = !(matchesText && matchesLevel);
         if (!line.hidden) visibleCount++;
       });
+      levelHint.hidden = selectedLevels.size > 0;
       emptyNotice.hidden = !(lines.length > 0 && visibleCount === 0);
     }
 

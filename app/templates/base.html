@@ -270,11 +270,28 @@
       border-radius: 3px;
     }
     .log-filter { flex: 1; }
+    .log-level-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .log-level-label {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--fg-dim);
+    }
     .log-level-filters {
       display: flex;
       gap: 0.4rem;
       flex-wrap: wrap;
-      margin-bottom: 1rem;
+    }
+    .log-level-hint {
+      font-size: 0.75rem;
+      color: var(--fg-dim);
     }
     .level-chip {
       font-family: var(--mono);
@@ -287,12 +304,12 @@
       padding: 0.3rem 0.6rem;
       border-radius: 3px;
       cursor: pointer;
-      opacity: 0.45;
     }
     .level-chip.active {
-      color: var(--accent);
-      border-color: var(--accent-dim);
-      opacity: 1;
+      color: var(--bg);
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
     }
     .log-container {
       height: 60vh;

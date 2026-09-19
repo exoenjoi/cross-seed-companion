@@ -45,7 +45,7 @@
   headers: *auth
   body:
     path: "${INPUT}"
-  input_label: "Path to the torrent data, as cross-seed sees it"
+  input_label: "Path to torrent data"
   confirm: "Search all your indexers for the torrent at this path?"
 
 - id: inject
