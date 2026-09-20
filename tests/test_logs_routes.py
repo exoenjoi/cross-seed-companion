@@ -47,6 +47,20 @@ def test_get_logs_shows_backfill_entries(tmp_path):
     assert "backfilled entry" in response.text
 
 
+def test_get_logs_current_day_shows_every_entry_not_just_the_latest_ones(tmp_path):
+    logs_dir = tmp_path / "logs"
+    logs_dir.mkdir()
+    target = logs_dir / "verbose.2026-09-15.log"
+    target.write_text(
+        "".join(f"2026-09-15 00:00:00.000 info: [x] entry {i}\n" for i in range(500))
+    )
+    (logs_dir / "verbose.current.log").symlink_to(target)
+
+    response = _client(logs_dir).get("/logs")
+
+    assert response.text.count('class="log-line') == 500
+
+
 def test_get_logs_with_day_param_shows_that_days_entries(tmp_path):
     logs_dir = tmp_path / "logs"
     logs_dir.mkdir()

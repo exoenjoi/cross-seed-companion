@@ -1,4 +1,4 @@
-from app.log_tailer import LogTailer, read_recent_entries
+from app.log_tailer import LogTailer
 
 
 def _make_current_log(tmp_path, target_name: str, content: str):
@@ -9,31 +9,6 @@ def _make_current_log(tmp_path, target_name: str, content: str):
         current.unlink()
     current.symlink_to(target)
     return current, target
-
-
-def test_read_recent_entries_returns_last_n_entries(tmp_path):
-    lines = "\n".join(
-        f"2026-09-15 00:00:{i:02d}.000 info: [x] entry {i}" for i in range(5)
-    )
-    current, _ = _make_current_log(tmp_path, "verbose.2026-09-15.log", lines + "\n")
-
-    entries = read_recent_entries(current, max_entries=2)
-
-    assert [e.message for e in entries] == ["entry 3", "entry 4"]
-
-
-def test_read_recent_entries_tolerates_invalid_utf8(tmp_path):
-    # Same encoding issue as app/log_history.py's Finding 3 fix: a bad byte
-    # must not crash the whole backfill, just get replaced.
-    current, target = _make_current_log(tmp_path, "verbose.2026-09-15.log", "")
-    target.write_bytes(
-        "2026-09-15 00:00:00.000 info: [x] entry with \xe9 accent\n".encode("latin-1")
-        + b"2026-09-15 00:00:01.000 info: [x] clean entry\n"
-    )
-
-    entries = read_recent_entries(current)
-
-    assert entries[-1].message == "clean entry"
 
 
 def test_log_tailer_tolerates_invalid_utf8_while_polling(tmp_path):
@@ -51,12 +26,6 @@ def test_log_tailer_tolerates_invalid_utf8_while_polling(tmp_path):
     entries = tailer.read_new_entries()
 
     assert entries[-1].message == "clean entry"
-
-
-def test_read_recent_entries_returns_empty_list_when_file_missing(tmp_path):
-    missing = tmp_path / "verbose.current.log"
-
-    assert read_recent_entries(missing) == []
 
 
 def test_log_tailer_only_returns_lines_appended_after_first_open(tmp_path):

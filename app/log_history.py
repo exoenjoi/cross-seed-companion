@@ -26,15 +26,18 @@ def list_available_days(logs_dir: Path) -> list[str]:
     )
 
 
-def read_day_entries(logs_dir: Path, day: str) -> list[LogEntry]:
-    path = next((p for p in list_rotated_log_files(logs_dir) if day_label(p) == day), None)
-    if path is None:
-        return []
+def read_log_file(path: Path) -> list[LogEntry]:
+    """Every entry of one log file (the current day's via its symlink, or a rotated day's)."""
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return []
     return parse_log_lines(lines)
+
+
+def read_day_entries(logs_dir: Path, day: str) -> list[LogEntry]:
+    path = next((p for p in list_rotated_log_files(logs_dir) if day_label(p) == day), None)
+    return read_log_file(path) if path is not None else []
 
 
 @lru_cache(maxsize=256)

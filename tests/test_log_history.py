@@ -6,6 +6,7 @@ from app.log_history import (
     list_rotated_log_files,
     read_all_events,
     read_day_entries,
+    read_log_file,
 )
 
 
@@ -162,6 +163,10 @@ def test_read_day_entries_tolerates_invalid_utf8(tmp_path):
     entries = read_day_entries(logs_dir, "2026-09-14")
 
     assert len(entries) == 1
+
+
+def test_read_log_file_returns_empty_list_when_file_missing(tmp_path):
+    assert read_log_file(tmp_path / "verbose.current.log") == []
 
 
 def test_read_all_events_picks_up_lines_appended_to_a_cached_file(tmp_path):

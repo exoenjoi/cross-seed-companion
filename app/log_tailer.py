@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.log_parser import ENTRY_RE, LogEntry, parse_log_lines
+from app.log_parser import ENTRY_RE, LogEntry
 
 
 class LogTailer:
@@ -65,14 +65,3 @@ class LogTailer:
         if self._file is not None:
             self._file.close()
             self._file = None
-
-
-def read_recent_entries(path: Path, max_entries: int = 200) -> list[LogEntry]:
-    # ponytail: reads the whole current file (one day of logs) instead of
-    # byte-seeking from the end; revisit if a daily file turns out to be
-    # unusually large.
-    if not path.exists():
-        return []
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    entries = parse_log_lines(lines)
-    return entries[-max_entries:]

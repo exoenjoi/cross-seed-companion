@@ -6,9 +6,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 from app.config import Settings
-from app.log_history import list_available_days, read_day_entries
+from app.log_history import list_available_days, read_day_entries, read_log_file
 from app.log_paths import CURRENT_LOG_FILENAME, resolve_logs_dir
-from app.log_tailer import LogTailer, read_recent_entries
+from app.log_tailer import LogTailer
 from app.templates import templates
 
 router = APIRouter()
@@ -60,7 +60,7 @@ def logs_page(request: Request, day: str | None = None):
             "_error_page.html",
             {"message": f"Logs not found: {path}. Check the logs/ bind mount."},
         )
-    entries = read_recent_entries(path, max_entries=200)
+    entries = read_log_file(path)
     return templates.TemplateResponse(
         request,
         "logs.html",
