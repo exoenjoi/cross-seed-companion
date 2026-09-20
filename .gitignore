@@ -12,3 +12,23 @@ __pycache__/
 PRODUCT.md
 docs/superpowers/
 .playwright-mcp/
+
+# local drafts and tool output
+graphify-out/
+reddit-posts/
+
+# secrets / real config copies (only the .example files are shipped)
+.env.*
+!.env.example
+config.js
+config.js.bak.*
+
+# python / OS noise
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+.DS_Store
