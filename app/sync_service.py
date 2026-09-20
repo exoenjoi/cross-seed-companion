@@ -25,6 +25,7 @@ class SyncPreview:
     added: list[str]
     removed: list[str]
     unchanged: list[str]
+    rekeyed: list[str]  # same indexer id on both sides, different apikey
     indexers_by_id: dict[int, Indexer]
 
 
@@ -102,13 +103,16 @@ def _build_preview(
     indexers_by_id: dict[int, Indexer],
 ) -> SyncPreview:
     added, removed = _compute_diff_by_id(current_urls, new_urls)
-    unchanged = [url for url in new_urls if url not in added]
+    current = set(current_urls)
+    unchanged = [url for url in new_urls if url in current]
+    rekeyed = [url for url in new_urls if url not in current and url not in added]
     return SyncPreview(
         current_urls=current_urls,
         new_urls=new_urls,
         added=added,
         removed=removed,
         unchanged=unchanged,
+        rekeyed=rekeyed,
         indexers_by_id=indexers_by_id,
     )
 

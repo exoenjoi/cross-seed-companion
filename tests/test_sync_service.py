@@ -61,7 +61,9 @@ def test_compute_sync_preview_reports_added_and_removed(tmp_path):
 
     assert preview.added == ["http://prowlarr:9696/3/api?apikey=new-key"]
     assert preview.removed == ["http://prowlarr:9696/2/api?apikey=old"]
-    assert preview.unchanged == ["http://prowlarr:9696/1/api?apikey=new-key"]
+    # id 1 is in both, but the config still holds the old key
+    assert preview.rekeyed == ["http://prowlarr:9696/1/api?apikey=new-key"]
+    assert preview.unchanged == []
     # config.js is unchanged after a plain preview
     assert "old" in config_path.read_text()
 
@@ -203,6 +205,8 @@ def test_preview_not_noop_when_api_key_rotated_for_same_id(tmp_path):
 
     assert preview.added == []
     assert preview.removed == []
+    assert preview.rekeyed == ["http://prowlarr:9696/1/api?apikey=new-key"]
+    assert preview.unchanged == []
     assert preview.current_urls != preview.new_urls
 
 

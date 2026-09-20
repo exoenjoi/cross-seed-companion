@@ -36,6 +36,19 @@
 </table>
 </div>
 {% endif %}
+{% if preview.rekeyed %}
+<p class="meta">API key changed ({{ preview.rekeyed | length }}):</p>
+<div class="table-scroll">
+<table class="diff">
+  <thead>
+    {{ sort_head() }}
+  </thead>
+  <tbody>
+    {% for url in preview.rekeyed %}{{ idx_row(url, preview.indexers_by_id, "", "") }}{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
 {% if preview.unchanged %}
 <p class="meta">Already synced ({{ preview.unchanged | length }}):</p>
 <div class="table-scroll">

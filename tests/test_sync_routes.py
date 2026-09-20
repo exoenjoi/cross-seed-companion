@@ -118,6 +118,8 @@ def test_get_sync_lists_current_indexers_when_only_key_rotated(tmp_path):
     assert response.status_code == 200
     assert '<span class="idx-name">A</span>' in response.text
     assert "http://prowlarr:9696/1/api?apikey=new-key" in response.text
+    assert "API key changed (1):" in response.text
+    assert "Already synced" not in response.text
 
 
 def test_get_sync_lists_unchanged_indexers_below_the_diff(tmp_path):
@@ -127,8 +129,8 @@ def test_get_sync_lists_unchanged_indexers_below_the_diff(tmp_path):
     config_path.write_text(
         "module.exports = {\n"
         '  torznab: [\n'
-        '    "http://prowlarr:9696/1/api?apikey=old",\n'
-        '    "http://prowlarr:9696/2/api?apikey=old"\n'
+        '    "http://prowlarr:9696/1/api?apikey=new-key",\n'
+        '    "http://prowlarr:9696/2/api?apikey=new-key"\n'
         '  ],\n'
         "  delay: 30,\n"
         "};\n"
@@ -156,6 +158,7 @@ def test_get_sync_lists_unchanged_indexers_below_the_diff(tmp_path):
     assert response.status_code == 200
     assert '<span class="idx-name">New</span>' in response.text
     assert "Already synced (1):" in response.text
+    assert "API key changed" not in response.text
     assert '<span class="idx-name">Kept</span>' in response.text
 
 
