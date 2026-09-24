@@ -44,8 +44,8 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   `subprocess`/shell involved: every action is a plain HTTP call with
   whitelist-only variable substitution.
 - **Real-time logs** — a `/logs` page streams cross-seed's `verbose.current.log`
-  live over Server-Sent Events, with a short backfill on load, a client-side
-  text filter, and level toggles (INFO/ERROR/...). A day picker lets you
+  live over Server-Sent Events, starting from the whole current day, with a
+  client-side text filter, and level toggles (INFO/ERROR/...). A day picker lets you
   switch to any already-rotated log file instead of the live current day.
 - **Added torrents** — a `/added` page lists what cross-seed has actually
   added to your torrent client, one row per torrent, parsed from every
@@ -55,8 +55,9 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   grouped in one row (even when they are named differently on each tracker, or
   were added on different days), with one entry per injection: tracker and
   date. A row of counters on top shows the cross-seeds added in total, today,
-  over the last 7 days and this month, plus the top trackers. Only lines cross-seed itself marks as a genuine success (`injected`,
-  or `saved` in its save-only mode) count, for every match type (`MATCH`,
+  over the last 7 days and this month, plus the top trackers. Only lines
+  cross-seed itself marks as a genuine success (`injected`, or `saved` in its
+  save-only mode) count, for every match type (`MATCH`,
   `MATCH_SIZE_ONLY`); injection failures and "already exists" lines are
   excluded. Limits: history stops at the oldest log file you keep, a torrent
   you removed from your client afterwards still appears, and timestamps follow
@@ -64,6 +65,8 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   Parsed results are cached in memory per log file, so only the current day's
   log is re-read as it grows; the first load after a restart reads every
   available file.
+- **Light and dark themes** — follows your OS preference by default, with a
+  switch in the header to override it (remembered per browser).
 
 ## Screenshots
 
@@ -109,8 +112,9 @@ mv docker-compose.example.yml docker-compose.yml
 docker compose up -d
 ```
 
-The image is built by GitHub Actions on every push to `main` and published to
-`ghcr.io/exoenjoi/cross-seed-companion`. To update: `docker compose pull && docker compose up -d`.
+Images are built by GitHub Actions and published to
+`ghcr.io/exoenjoi/cross-seed-companion`: release images (`latest`, `X.Y.Z`,
+`X.Y`) for every version tag, `edge` for every push to `main`. To update: `docker compose pull && docker compose up -d`.
 
 Then open `http://<host>:8000/sync` — review the diff, confirm, restart cross-seed.
 
@@ -124,8 +128,8 @@ While the major version is `0`, minor releases may change configuration
 | Image tag | What it is |
 |---|---|
 | `latest` | The most recent release |
-| `0.1.0` | That exact release (pin this for reproducible deployments) |
-| `0.1` | The latest patch of that minor version |
+| `0.4.0` | That exact release (pin this for reproducible deployments) |
+| `0.4` | The latest patch of that minor version |
 | `edge` | The current `main` branch, may be unreleased or unstable |
 
 The running version is shown in the footer of every page.
