@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">Indexers Prowlarr → cross-seed</h1>
+<p class="page-intro">Pulls your indexers from Prowlarr and writes them into the <code>torznab</code> array of cross-seed's <code>config.js</code>. Review the diff first; the old file is backed up before writing. cross-seed picks up the change after a restart. <a href="https://www.cross-seed.org/docs/basics/options#torznab" target="_blank" rel="noopener">torznab option ↗</a></p>
 <div id="sync-result" aria-live="polite">
   {% include "_sync_result.html" %}
 </div>

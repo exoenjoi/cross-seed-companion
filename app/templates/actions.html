@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title">cross-seed actions</h1>
+<p class="page-intro">Triggers cross-seed jobs through its HTTP API (search, RSS, inject, cleanup…). The badge shows whether the API is reachable. <a href="https://www.cross-seed.org/docs/reference/api" target="_blank" rel="noopener">API reference ↗</a></p>
 
 <div id="ping-badge" aria-live="polite" hx-get="/actions/ping" hx-trigger="load, every 15s" hx-swap="innerHTML">
   {% include "_ping_badge.html" %}
