@@ -1,6 +1,16 @@
 import time
+from datetime import date
 
-from app.crossseed_events import CrossSeedEvent, DayEntry, DayGroup, Injection, extract_events, group_events
+from app.crossseed_events import (
+    AddedStats,
+    CrossSeedEvent,
+    DayEntry,
+    DayGroup,
+    Injection,
+    extract_events,
+    group_events,
+    summarize,
+)
 from app.log_parser import LogEntry
 
 
@@ -10,9 +20,9 @@ def test_extract_events_matches_successful_injected_line():
         level="info",
         component="rss",
         message=(
-            "Found Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv [621d83e9...] on TrackerE "
-            "by MATCH from torrentClient (Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv "
-            "[7cf6d506...@192.0.2.10:8090]) - injected"
+            "Found Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv [c0ffee01...] on TrackerE "
+            "by MATCH from torrentClient (Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv "
+            "[c0ffee02...@192.0.2.10:8090]) - injected"
         ),
     )
 
@@ -21,13 +31,13 @@ def test_extract_events_matches_successful_injected_line():
     assert events == [
         CrossSeedEvent(
             timestamp="2026-09-11 11:26:46.414",
-            name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
+            name="Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv",
             tracker="TrackerE",
             outcome="injected",
             component="rss",
-            candidate_hash="621d83e9",
-            source_name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
-            source_hash="7cf6d506",
+            candidate_hash="c0ffee01",
+            source_name="Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv",
+            source_hash="c0ffee02",
         )
     ]
 
@@ -54,17 +64,17 @@ def test_extract_events_handles_name_with_parentheses_and_tracker_with_api_suffi
         level="info",
         component="rss",
         message=(
-            "Found Chappie (2015) MULTi VFF 2160p BluRay x265 TrueHD Atmos-XANDER.mkv "
-            "[a459eb1b...] on The Old School (API) by MATCH from torrentClient "
-            "(Chappie (2015) MULTi VFF 2160p BluRay x265 TrueHD Atmos-XANDER.mkv "
-            "[eaebde2a...@192.0.2.10:8090]) - injected"
+            "Found Other Movie (2015) MULTi 2160p BluRay x265-GROUP.mkv "
+            "[c0ffee03...] on Tracker Name (API) by MATCH from torrentClient "
+            "(Other Movie (2015) MULTi 2160p BluRay x265-GROUP.mkv "
+            "[c0ffee04...@192.0.2.10:8090]) - injected"
         ),
     )
 
     events = extract_events([entry])
 
-    assert events[0].name == "Chappie (2015) MULTi VFF 2160p BluRay x265 TrueHD Atmos-XANDER.mkv"
-    assert events[0].tracker == "The Old School (API)"
+    assert events[0].name == "Other Movie (2015) MULTi 2160p BluRay x265-GROUP.mkv"
+    assert events[0].tracker == "Tracker Name (API)"
 
 
 def test_extract_events_excludes_failed_injection_outcome():
@@ -77,9 +87,9 @@ def test_extract_events_excludes_failed_injection_outcome():
         level="error",
         component="inject",
         message=(
-            "Found Fight.Club.1999.1080p.BLURAY.x264-FoX.mkv [3b677ec9...] on TrackerD "
-            "by MATCH from torrentClient (Fight.Club.1999.1080p.BLURAY.x264-FoX.mkv "
-            "[5d598488...@192.0.2.10:8090]) - failed to inject, saving..."
+            "Found Old.Movie.1999.1080p.BluRay.x264-GROUP.mkv [c0ffee05...] on TrackerD "
+            "by MATCH from torrentClient (Old.Movie.1999.1080p.BluRay.x264-GROUP.mkv "
+            "[c0ffee06...@192.0.2.10:8090]) - failed to inject, saving..."
         ),
     )
 
@@ -92,9 +102,9 @@ def test_extract_events_excludes_already_exists_outcome():
         level="verbose",
         component="inject",
         message=(
-            "Found Some.Show.S12E04.1080p.mkv [01e6dd4c...] on TrackerD "
+            "Found Some.Show.S12E04.1080p.mkv [c0ffee07...] on TrackerD "
             "by MATCH from torrentClient (Some.Show.S12E04.1080p.mkv "
-            "[4d3a6e84...@192.0.2.10:8090]) - exists"
+            "[c0ffee08...@192.0.2.10:8090]) - exists"
         ),
     )
 
@@ -106,7 +116,7 @@ def test_extract_events_ignores_inject_linking_lines():
         timestamp="2026-09-02 00:15:28.689",
         level="verbose",
         component="inject",
-        message="Linking Some.Movie.2024.1080p.mkv [79cb2e52...] from Some.Movie.2024.1080p.mkv [1348f034...@client] to /downloads/complete",
+        message="Linking Some.Movie.2024.1080p.mkv [c0ffee09...] from Some.Movie.2024.1080p.mkv [c0ffee0a...@client] to /downloads/complete",
     )
 
     assert extract_events([entry]) == []
@@ -117,7 +127,7 @@ def test_extract_events_ignores_injection_failed_error_lines():
         timestamp="2026-09-02 00:15:54.924",
         level="error",
         component="qbittorrent@192.0.2.10:8090",
-        message="Injection failed for Some.Movie.2024.1080p.mkv [79cb2e52...]: Failed to retrieve torrent after adding",
+        message="Injection failed for Some.Movie.2024.1080p.mkv [c0ffee09...]: Failed to retrieve torrent after adding",
     )
 
     assert extract_events([entry]) == []
@@ -145,9 +155,9 @@ def test_extract_events_matches_line_with_trailing_continuation_line():
         level="info",
         component="rss",
         message=(
-            "Found Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv [621d83e9...] on TrackerE "
-            "by MATCH from torrentClient (Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv "
-            "[7cf6d506...@192.0.2.10:8090]) - injected"
+            "Found Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv [c0ffee01...] on TrackerE "
+            "by MATCH from torrentClient (Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv "
+            "[c0ffee02...@192.0.2.10:8090]) - injected"
             "\n    at Object.<anonymous> (/app/x.js:1:1)"
         ),
     )
@@ -157,13 +167,13 @@ def test_extract_events_matches_line_with_trailing_continuation_line():
     assert events == [
         CrossSeedEvent(
             timestamp="2026-09-11 11:26:46.414",
-            name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
+            name="Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv",
             tracker="TrackerE",
             outcome="injected",
             component="rss",
-            candidate_hash="621d83e9",
-            source_name="Zootopia.2.2025.2160p.DV.HDR.WEBRip.x265-ESPER.mkv",
-            source_hash="7cf6d506",
+            candidate_hash="c0ffee01",
+            source_name="Some.Movie.2025.2160p.WEBRip.x265-GROUP.mkv",
+            source_hash="c0ffee02",
         )
     ]
 
@@ -198,17 +208,17 @@ def test_extract_events_reads_candidate_and_source_identity():
         level="info",
         component="search",
         message=(
-            "Found Example Movie (2024) Hybrid MULTi.mkv [1a1c96a6...] on TrackerD "
-            "by MATCH_SIZE_ONLY from torrentClient (Example Movie (2024) [72405bd8...@192.0.2.10:8090]) - injected"
+            "Found Example Movie (2024) Hybrid MULTi.mkv [d00d0001...] on TrackerD "
+            "by MATCH_SIZE_ONLY from torrentClient (Example Movie (2024) [d00d0002...@192.0.2.10:8090]) - injected"
         ),
     )
 
     event = extract_events([entry])[0]
 
     assert (event.candidate_hash, event.source_name, event.source_hash) == (
-        "1a1c96a6",
+        "d00d0001",
         "Example Movie (2024)",
-        "72405bd8",
+        "d00d0002",
     )
 
 
@@ -218,14 +228,14 @@ def test_extract_events_handles_virtual_source_without_hash():
         level="info",
         component="search",
         message=(
-            "Found Kids.Show.S12E04.mkv [01e6dd4c...] on TrackerD by MATCH from virtual "
+            "Found Kids.Show.S12E04.mkv [c0ffee07...] on TrackerD by MATCH from virtual "
             "(Kids.Show.S12.1080p-GROUP [@192.0.2.10:8090]) - injected"
         ),
     )
 
     event = extract_events([entry])[0]
 
-    assert event.candidate_hash == "01e6dd4c"
+    assert event.candidate_hash == "c0ffee07"
     assert event.source_hash == ""
     assert event.source_name == "Kids.Show.S12.1080p-GROUP"
 
@@ -234,24 +244,24 @@ def _event(ts, tracker, candidate, source, name="X", source_name="X", outcome="i
     return CrossSeedEvent(ts, name, tracker, outcome, "search", candidate, source_name, source)
 
 
-# Real Example Movie (2024) history from the logs: the TrackerF copy (72405bd8) later
-# served as the source for TrackerG and TrackerD, all from original 2efd6134.
-CONCLAVE = [
-    _event("2026-09-19 18:44:33.674", "TrackerD", "1a1c96a6", "72405bd8", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
-    _event("2026-09-19 18:44:32.829", "TrackerG (API)", "34c615d3", "72405bd8", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
-    _event("2026-09-19 17:31:55.662", "TrackerF", "72405bd8", "2efd6134", "Example Movie (2024)", "Example Movie (2024) Hybrid MULTi.mkv"),
-    _event("2026-09-05 13:31:04.328", "TrackerE", "b7a4a961", "2efd6134", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024) Hybrid MULTi.mkv"),
+# Example Movie (2024) history modelled on real logs: the TrackerF copy (d00d0002) later
+# served as the source for TrackerG and TrackerD, all from original d00d0004.
+LINEAGE = [
+    _event("2026-09-19 18:44:33.674", "TrackerD", "d00d0001", "d00d0002", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
+    _event("2026-09-19 18:44:32.829", "TrackerG (API)", "d00d0003", "d00d0002", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024)"),
+    _event("2026-09-19 17:31:55.662", "TrackerF", "d00d0002", "d00d0004", "Example Movie (2024)", "Example Movie (2024) Hybrid MULTi.mkv"),
+    _event("2026-09-05 13:31:04.328", "TrackerE", "d00d0005", "d00d0004", "Example Movie (2024) Hybrid MULTi.mkv", "Example Movie (2024) Hybrid MULTi.mkv"),
 ]
 
 
 def test_group_events_links_copies_through_their_source_chain():
-    groups = group_events(CONCLAVE)
+    groups = group_events(LINEAGE)
 
     assert len(groups) == 1
-    conclave = groups[0]
-    assert conclave.name == "Example Movie (2024) Hybrid MULTi.mkv"  # the original torrent's name
-    assert conclave.timestamp == "2026-09-19 18:44:33.674"
-    assert conclave.injections == [
+    lineage = groups[0]
+    assert lineage.name == "Example Movie (2024) Hybrid MULTi.mkv"  # the original torrent's name
+    assert lineage.timestamp == "2026-09-19 18:44:33.674"
+    assert lineage.injections == [
         Injection("TrackerD", "2026-09-19 18:44:33.674", "injected"),
         Injection("TrackerG (API)", "2026-09-19 18:44:32.829", "injected"),
         Injection("TrackerF", "2026-09-19 17:31:55.662", "injected"),
@@ -260,9 +270,9 @@ def test_group_events_links_copies_through_their_source_chain():
 
 
 def test_group_events_keeps_each_injection_date_separate():
-    v3x = next(i for i in group_events(CONCLAVE)[0].injections if i.tracker == "TrackerE")
+    injection = next(i for i in group_events(LINEAGE)[0].injections if i.tracker == "TrackerE")
 
-    assert v3x.timestamp == "2026-09-05 13:31:04.328"
+    assert injection.timestamp == "2026-09-05 13:31:04.328"
 
 
 def test_group_events_does_not_merge_unrelated_torrents_sharing_a_name():
@@ -278,8 +288,8 @@ def test_group_events_does_not_merge_unrelated_torrents_sharing_a_name():
 
 def test_group_events_treats_virtual_sources_as_separate_torrents():
     events = [
-        _event("2026-09-13 08:07:51.120", "TrackerD", "f9a5b0b0", "", "Kids.Show.S12E08.mkv", "Kids.Show.S12.1080p-pack"),
-        _event("2026-09-13 08:07:50.718", "TrackerD", "01e6dd4c", "", "Kids.Show.S12E04.mkv", "Kids.Show.S12.1080p-pack"),
+        _event("2026-09-13 08:07:51.120", "TrackerD", "d00d0006", "", "Kids.Show.S12E08.mkv", "Kids.Show.S12.1080p-pack"),
+        _event("2026-09-13 08:07:50.718", "TrackerD", "c0ffee07", "", "Kids.Show.S12E04.mkv", "Kids.Show.S12.1080p-pack"),
     ]
 
     groups = group_events(events)
@@ -305,7 +315,7 @@ def test_group_events_returns_empty_list_for_no_events():
 
 
 def test_days_groups_a_torrents_injections_by_day_newest_first():
-    days = group_events(CONCLAVE)[0].days
+    days = group_events(LINEAGE)[0].days
 
     assert days == [
         DayGroup(
@@ -322,7 +332,7 @@ def test_days_groups_a_torrents_injections_by_day_newest_first():
 
 def test_days_collapses_identical_injections_into_a_count():
     # Two different torrents injected on the same tracker in the same minute
-    # (real Reservoir Dogs case): shown once, with a count.
+    # (seen in real logs): shown once, with a count.
     events = [
         _event("2026-09-18 18:46:37.386", "TrackerD", "aaaaaaaa", "11111111", source_name="RD"),
         _event("2026-09-18 18:46:30.492", "TrackerD", "bbbbbbbb", "11111111", source_name="RD"),
@@ -342,3 +352,22 @@ def test_days_keeps_same_tracker_apart_when_minutes_differ():
     entries = group_events(events)[0].days[0].entries
 
     assert [(e.time, e.count) for e in entries] == [("18:47", 1), ("18:46", 1)]
+
+
+def test_summarize_counts_cross_seeds_by_period():
+    events = [
+        _event("2026-09-24 09:00:00.000", "TrackerA", "aaaaaaaa", "11111111"),
+        _event("2026-09-18 10:00:00.000", "TrackerB", "bbbbbbbb", "11111111"),  # 7th day back
+        _event("2026-09-17 10:00:00.000", "TrackerA", "cccccccc", "22222222"),
+        _event("2026-08-31 10:00:00.000", "TrackerA", "dddddddd", "33333333"),
+    ]
+
+    stats = summarize(group_events(events), date(2026, 9, 24))
+
+    assert stats == AddedStats(
+        cross_seeds=4,
+        today=1,
+        last_7_days=2,
+        this_month=3,
+        top_trackers=[("TrackerA", 3), ("TrackerB", 1)],
+    )

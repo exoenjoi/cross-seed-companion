@@ -54,7 +54,8 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   from; CSC follows those links, so all the copies of the same torrent are
   grouped in one row (even when they are named differently on each tracker, or
   were added on different days), with one entry per injection: tracker and
-  date. Only lines cross-seed itself marks as a genuine success (`injected`,
+  date. A row of counters on top shows the cross-seeds added in total, today,
+  over the last 7 days and this month, plus the top trackers. Only lines cross-seed itself marks as a genuine success (`injected`,
   or `saved` in its save-only mode) count, for every match type (`MATCH`,
   `MATCH_SIZE_ONLY`); injection failures and "already exists" lines are
   excluded. Limits: history stops at the oldest log file you keep, a torrent

@@ -1,6 +1,16 @@
 {% if not grouped %}
 <p class="meta">No additions found in the available logs.</p>
 {% else %}
+<dl class="kpis">
+  <div class="kpi"><dt>Cross-seeds</dt><dd>{{ stats.cross_seeds }}</dd></div>
+  <div class="kpi"><dt>Today</dt><dd>{{ stats.today }}</dd></div>
+  <div class="kpi"><dt>Last 7 days</dt><dd>{{ stats.last_7_days }}</dd></div>
+  <div class="kpi"><dt>This month</dt><dd>{{ stats.this_month }}</dd></div>
+</dl>
+<p class="meta kpi-trackers">
+  Top trackers:
+  {% for tracker, count in stats.top_trackers %}<span class="added-tracker">{{ tracker }}</span> {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+</p>
 <p class="meta">{{ grouped | length }} torrent(s) added</p>
 <ol class="added-list">
   {% for group in grouped %}

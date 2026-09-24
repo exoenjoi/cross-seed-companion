@@ -1,5 +1,7 @@
 import re
+from collections import Counter
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 from app.log_parser import LogEntry
 
@@ -142,3 +144,28 @@ def group_events(events: list[CrossSeedEvent]) -> list[GroupedEvent]:
             )
         )
     return groups
+
+
+@dataclass
+class AddedStats:
+    """Counts of cross-seeds (one per injection on a tracker), not of distinct torrents."""
+
+    cross_seeds: int
+    today: int
+    last_7_days: int
+    this_month: int
+    top_trackers: list[tuple[str, int]]
+
+
+def summarize(groups: list[GroupedEvent], today: date) -> AddedStats:
+    injections = [i for group in groups for i in group.injections]
+    days = [i.timestamp[:10] for i in injections]
+    week_start = (today - timedelta(days=6)).isoformat()
+    month_start = today.replace(day=1).isoformat()
+    return AddedStats(
+        cross_seeds=len(injections),
+        today=days.count(today.isoformat()),
+        last_7_days=sum(day >= week_start for day in days),
+        this_month=sum(day >= month_start for day in days),
+        top_trackers=Counter(i.tracker for i in injections).most_common(3),
+    )

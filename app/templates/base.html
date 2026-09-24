@@ -358,6 +358,31 @@
     .log-component { color: var(--accent); margin-right: 0.4rem; }
     .log-line.log-level-error { color: var(--danger); }
     .log-line.log-level-verbose { color: var(--fg-dim); }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin: 0 0 0.75rem;
+    }
+    .kpi {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      padding: 0.7rem 0.9rem;
+    }
+    .kpi dt {
+      color: var(--fg-dim);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .kpi dd {
+      margin: 0.2rem 0 0;
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-trackers { margin-bottom: 0.35rem; }
+    .kpi-trackers + .meta { margin-top: 0; }
     .added-list {
       list-style: none;
       margin: 0;
@@ -449,6 +474,9 @@
       }
       .log-controls {
         flex-direction: column;
+      }
+      .kpis {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
