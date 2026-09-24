@@ -459,6 +459,8 @@
       color: var(--fg-dim);
       padding: 0 1rem 1.5rem;
     }
+    .app-footer a { color: inherit; }
+    .app-footer a:hover { color: var(--accent); }
     @media (max-width: 640px) {
       header.topbar {
         flex-direction: column;
@@ -503,7 +505,7 @@
   <main>
     {% block content %}{% endblock %}
   </main>
-  <footer class="app-footer">Cross-Seed Companion {{ app_version() }}</footer>
+  <footer class="app-footer"><a href="https://github.com/exoenjoi/cross-seed-companion" target="_blank" rel="noopener">Cross-Seed Companion</a> {{ app_version() }}</footer>
 <script>
     (function () {
       var root = document.documentElement, btn = document.getElementById("theme-toggle");
