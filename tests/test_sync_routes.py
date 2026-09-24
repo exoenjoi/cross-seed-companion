@@ -175,6 +175,35 @@ def test_post_sync_apply_writes_config_and_confirms(tmp_path):
     assert (tmp_path / "config.js").read_text().count("http://prowlarr:9696/2/api?apikey=new-key") == 1
 
 
+def test_post_sync_apply_shows_refreshed_state_not_the_old_diff(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=2, name="B", enable=True, privacy="private", tags=[])],
+    )
+
+    response = client.post("/sync/apply")
+
+    assert "Sync applied (+1 / −1)" in response.text
+    assert 'class="added"' not in response.text
+    assert 'class="removed"' not in response.text
+    assert "Already synced (1):" in response.text
+    assert "Already in sync" not in response.text
+    assert "Confirm and apply" not in response.text
+    assert "Open Docker manager" not in response.text
+
+
+def test_post_sync_apply_keeps_docker_manager_link(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=2, name="B", enable=True, privacy="private", tags=[])],
+    )
+    client.app.state.settings.docker_manager_url = "http://docker-manager.example"
+
+    response = client.post("/sync/apply")
+
+    assert 'href="http://docker-manager.example"' in response.text
+
+
 def test_get_sync_shows_apply_form_when_only_api_key_rotated(tmp_path):
     """Same indexer id (1) on both sides but a rotated API key must still
     surface the apply form, not the 'Already in sync' no-op message."""

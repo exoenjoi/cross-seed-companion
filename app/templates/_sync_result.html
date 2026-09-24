@@ -94,15 +94,16 @@
   });
 })();
 </script>
-{% if preview.current_urls == preview.new_urls %}
-  <p class="notice">Already in sync, nothing to do.</p>
-{% elif applied %}
+{% if applied and applied.current_urls != applied.new_urls %}
   <p class="notice">
-    Sync applied. Restart cross-seed to apply the changes.
+    Sync applied (+{{ applied.added | length }} / −{{ applied.removed | length }}{% if applied.rekeyed %}, {{ applied.rekeyed | length }} key(s) updated{% endif %}).
+    Restart cross-seed to apply the changes.
     {% if settings.docker_manager_url %}
       <br><a href="{{ settings.docker_manager_url }}" target="_blank" rel="noopener">Open Docker manager →</a>
     {% endif %}
   </p>
+{% elif preview.current_urls == preview.new_urls %}
+  <p class="notice">Already in sync, nothing to do.</p>
 {% else %}
   <div class="actions">
     <form hx-post="/sync/apply" hx-target="#sync-result" hx-confirm="Confirm sync?" hx-disabled-elt="find button">

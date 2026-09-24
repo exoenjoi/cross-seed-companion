@@ -52,9 +52,11 @@ def sync_apply(request: Request):
     settings = request.app.state.settings
     prowlarr = request.app.state.prowlarr_client
     try:
-        preview = apply_sync(prowlarr, settings)
+        applied = apply_sync(prowlarr, settings)
+        # Re-read config.js so the tables show what is now on disk, not the pre-apply diff.
+        preview = compute_sync_preview(prowlarr, settings)
     except (TorznabBlockError, OSError, httpx.HTTPError, ValueError) as exc:
         return templates.TemplateResponse(request, "_error.html", {"message": str(exc)})
     return templates.TemplateResponse(
-        request, "_sync_result.html", {"preview": preview, "applied": True, "settings": settings}
+        request, "_sync_result.html", {"preview": preview, "applied": applied, "settings": settings}
     )
