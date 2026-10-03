@@ -32,6 +32,8 @@ A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — th
   cross-seed's `torznab` config block, with a diff preview, explicit confirmation,
   and a timestamped backup before any write. Optionally exclude public trackers
   and/or indexers carrying a specific Prowlarr tag.
+  Each indexer shows its Prowlarr status (ok, failing, disabled), so you can
+  spot one Prowlarr has temporarily disabled after repeated failures.
 - **Declarative actions** — trigger cross-seed's API from an `/actions` page: its
   jobs (search, full search, inject, cleanup, RSS, indexer-cap refresh) and a
   search for one specific torrent by infoHash or path (its webhook endpoint),
@@ -86,6 +88,31 @@ CSC is a single Python (FastAPI + htmx) Docker image, server-rendered, no
 build step, no Node.js in the image. It's designed to run on the **same
 Docker host as cross-seed**, reading and writing cross-seed's config through a
 bind mount — never over SSH, never through the Docker socket:
+
+```mermaid
+flowchart LR
+    browser([Browser])
+    proxy["Authenticating reverse proxy<br/>(recommended, not included)"]
+    prowlarr[Prowlarr]
+
+    subgraph host["Docker host"]
+        csc["<b>Cross-Seed Companion</b><br/>FastAPI + htmx"]
+        crossseed["cross-seed daemon"]
+        subgraph dir["cross-seed config directory"]
+            config[("config.js")]
+            logs[("logs/")]
+            db[("cross-seed.db")]
+        end
+    end
+
+    browser --> proxy -->|"HTTP, SSE for live logs"| csc
+    csc -->|"REST, read-only:<br/>indexers, tags, status"| prowlarr
+    csc -->|"HTTP API, X-Api-Key:<br/>jobs, webhook, ping"| crossseed
+    csc -->|"bind mount, read-write<br/>(backup before each write)"| config
+    csc -->|"bind mount, read-only"| logs
+    csc -.-x|"never touched"| db
+    crossseed --- dir
+```
 
 - cross-seed's `config.js` is mounted read-write (needed for the sync feature).
 - cross-seed's `logs/` directory is mounted read-only (used by the live log
