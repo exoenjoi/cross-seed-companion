@@ -17,7 +17,7 @@
   {% endif %}
   <td class="idx-id" data-sort="{{ indexer.id if indexer else -1 }}">{{ indexer.id if indexer else "" }}</td>
   <td class="idx-added" data-sort="{{ indexer.added[:10] if indexer and indexer.added else '' }}">{{ indexer.added[:10] if indexer and indexer.added else "" }}</td>
-  <td class="idx-url">{{ url | mask_api_key }}</td>
+  <td class="idx-url" title="{{ url | mask_api_key }}">{{ url | mask_api_key }}</td>
 </tr>
 {% endmacro %}
 {% macro sort_head() %}
