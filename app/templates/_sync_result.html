@@ -1,4 +1,4 @@
-{% macro idx_row(url, indexers_by_id, sign, row_class) %}
+{% macro idx_row(url, indexers_by_id, statuses, sign, row_class) %}
 {% set indexer = url | indexer_for(indexers_by_id) %}
 <tr{% if row_class %} class="{{ row_class }}"{% endif %}>
   <td class="idx-name-cell" data-sort="{{ indexer.name | lower if indexer else '' }}">
@@ -6,6 +6,15 @@
     {% if indexer %}<span class="idx-name">{{ indexer.name }}</span>{% endif %}
   </td>
   <td class="idx-privacy{% if indexer %} idx-privacy-{{ indexer.privacy | lower }}{% endif %}" data-sort="{{ indexer.privacy | lower if indexer else '' }}">{{ indexer.privacy if indexer else "" }}</td>
+  {% if not indexer or statuses is none %}
+  <td class="idx-status" data-sort=""></td>
+  {% elif not indexer.enable %}
+  <td class="idx-status" data-sort="disabled" title="Disabled in Prowlarr">● disabled</td>
+  {% elif indexer.id in statuses %}
+  <td class="idx-status idx-status-failing" data-sort="failing" title="Disabled by Prowlarr after failures until {{ statuses[indexer.id][:16] | replace('T', ' ') }} UTC">● failing</td>
+  {% else %}
+  <td class="idx-status idx-status-ok" data-sort="ok">● ok</td>
+  {% endif %}
   <td class="idx-id" data-sort="{{ indexer.id if indexer else -1 }}">{{ indexer.id if indexer else "" }}</td>
   <td class="idx-added" data-sort="{{ indexer.added[:10] if indexer and indexer.added else '' }}">{{ indexer.added[:10] if indexer and indexer.added else "" }}</td>
   <td class="idx-url">{{ url | mask_api_key }}</td>
@@ -15,8 +24,9 @@
 <tr>
   <th class="sortable" data-sort-col="0" data-sort-type="text">Indexer</th>
   <th class="sortable" data-sort-col="1" data-sort-type="text">Privacy</th>
-  <th class="sortable" data-sort-col="2" data-sort-type="num" data-sort-dir="desc">ID</th>
-  <th class="sortable" data-sort-col="3" data-sort-type="text">Added</th>
+  <th class="sortable" data-sort-col="2" data-sort-type="text">Status</th>
+  <th class="sortable" data-sort-col="3" data-sort-type="num" data-sort-dir="desc">ID</th>
+  <th class="sortable" data-sort-col="4" data-sort-type="text">Added</th>
   <th>URL</th>
 </tr>
 {% endmacro %}
@@ -30,8 +40,8 @@
     {{ sort_head() }}
   </thead>
   <tbody>
-    {% for url in preview.added %}{{ idx_row(url, preview.indexers_by_id, "+", "added") }}{% endfor %}
-    {% for url in preview.removed %}{{ idx_row(url, preview.indexers_by_id, "-", "removed") }}{% endfor %}
+    {% for url in preview.added %}{{ idx_row(url, preview.indexers_by_id, statuses, "+", "added") }}{% endfor %}
+    {% for url in preview.removed %}{{ idx_row(url, preview.indexers_by_id, statuses, "-", "removed") }}{% endfor %}
   </tbody>
 </table>
 </div>
@@ -44,7 +54,7 @@
     {{ sort_head() }}
   </thead>
   <tbody>
-    {% for url in preview.rekeyed %}{{ idx_row(url, preview.indexers_by_id, "", "") }}{% endfor %}
+    {% for url in preview.rekeyed %}{{ idx_row(url, preview.indexers_by_id, statuses, "", "") }}{% endfor %}
   </tbody>
 </table>
 </div>
@@ -57,7 +67,7 @@
     {{ sort_head() }}
   </thead>
   <tbody>
-    {% for url in preview.unchanged %}{{ idx_row(url, preview.indexers_by_id, "", "") }}{% endfor %}
+    {% for url in preview.unchanged %}{{ idx_row(url, preview.indexers_by_id, statuses, "", "") }}{% endfor %}
   </tbody>
 </table>
 </div>
@@ -90,7 +100,7 @@
         sortTable(table, parseInt(th.dataset.sortCol, 10), th.dataset.sortType, dir);
       });
     });
-    sortTable(table, 2, "num", "desc"); // default: ID desc
+    sortTable(table, 3, "num", "desc"); // default: ID desc
   });
 })();
 </script>

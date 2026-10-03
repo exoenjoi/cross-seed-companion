@@ -53,6 +53,22 @@ def test_get_tags_parses_response():
     assert [(t.id, t.label) for t in tags] == [(10, "no-cross-seed"), (11, "anime")]
 
 
+def test_get_indexer_statuses_maps_indexer_id_to_disabled_till():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/v1/indexerstatus"
+        return httpx.Response(
+            200,
+            json=[
+                {"id": 1, "indexerId": 2, "disabledTill": "2025-01-01T12:00:00Z"},
+                {"id": 2, "indexerId": 3},
+            ],
+        )
+
+    client = _make_client(handler)
+
+    assert client.get_indexer_statuses() == {2: "2025-01-01T12:00:00Z"}
+
+
 def test_get_indexers_raises_on_http_error():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(500, text="boom")

@@ -30,6 +30,17 @@ def _mask_api_key(url: str) -> str:
     return _API_KEY_RE.sub(_mask, url)
 
 
+def _indexer_statuses(prowlarr) -> dict[int, str] | None:
+    """Failing indexers per Prowlarr, or None when the status call itself fails.
+
+    Purely informational: it must never break the sync page.
+    """
+    try:
+        return prowlarr.get_indexer_statuses()
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        return None
+
+
 templates.env.filters["indexer_for"] = _indexer_for
 templates.env.filters["mask_api_key"] = _mask_api_key
 
@@ -43,7 +54,7 @@ def sync_page(request: Request):
     except (TorznabBlockError, OSError, httpx.HTTPError, ValueError) as exc:
         return templates.TemplateResponse(request, "_error_page.html", {"message": str(exc)})
     return templates.TemplateResponse(
-        request, "sync.html", {"preview": preview, "applied": False, "settings": settings}
+        request, "sync.html", {"preview": preview, "applied": False, "settings": settings, "statuses": _indexer_statuses(prowlarr)},
     )
 
 
@@ -58,5 +69,5 @@ def sync_apply(request: Request):
     except (TorznabBlockError, OSError, httpx.HTTPError, ValueError) as exc:
         return templates.TemplateResponse(request, "_error.html", {"message": str(exc)})
     return templates.TemplateResponse(
-        request, "_sync_result.html", {"preview": preview, "applied": applied, "settings": settings}
+        request, "_sync_result.html", {"preview": preview, "applied": applied, "settings": settings, "statuses": _indexer_statuses(prowlarr)},
     )

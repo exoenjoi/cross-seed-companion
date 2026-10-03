@@ -1,3 +1,4 @@
+import httpx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -16,9 +17,15 @@ CONFIG_TEXT = """module.exports = {
 
 
 class FakeProwlarr:
-    def __init__(self, indexers, tags):
+    def __init__(self, indexers, tags, statuses=None):
         self._indexers = indexers
         self._tags = tags
+        self._statuses = statuses
+
+    def get_indexer_statuses(self):
+        if self._statuses is None:
+            raise httpx.ConnectError("status endpoint down")
+        return self._statuses
 
     def get_indexers(self):
         return self._indexers
@@ -27,7 +34,7 @@ class FakeProwlarr:
         return self._tags
 
 
-def _client(tmp_path, indexers, tags=None, prowlarr_api_key="new-key") -> TestClient:
+def _client(tmp_path, indexers, tags=None, prowlarr_api_key="new-key", statuses=None) -> TestClient:
     config_path = tmp_path / "config.js"
     config_path.write_text(CONFIG_TEXT)
 
@@ -41,7 +48,7 @@ def _client(tmp_path, indexers, tags=None, prowlarr_api_key="new-key") -> TestCl
         crossseed_api_key="cs-key",
         crossseed_config_path=str(tmp_path),
     )
-    app.state.prowlarr_client = FakeProwlarr(indexers, tags or [])
+    app.state.prowlarr_client = FakeProwlarr(indexers, tags or [], statuses)
     return TestClient(app)
 
 
@@ -83,7 +90,7 @@ def test_get_sync_shows_id_privacy_and_added_date_next_to_indexer(tmp_path):
 
     assert response.status_code == 200
     assert '<th class="sortable" data-sort-col="0" data-sort-type="text">Indexer</th>' in response.text
-    assert '<th class="sortable" data-sort-col="2" data-sort-type="num" data-sort-dir="desc">ID</th>' in response.text
+    assert '<th class="sortable" data-sort-col="3" data-sort-type="num" data-sort-dir="desc">ID</th>' in response.text
     assert '<th>URL</th>' in response.text
     assert '<td class="idx-id" data-sort="2">2</td>' in response.text
     assert '<td class="idx-privacy idx-privacy-private" data-sort="private">private</td>' in response.text
@@ -240,3 +247,35 @@ def test_get_sync_shows_error_when_torznab_block_missing(tmp_path):
     # Full-page GET error must render inside the app shell (base.html), not
     # as a naked unstyled fragment.
     assert "Cross-Seed Companion" in response.text
+
+
+def test_get_sync_shows_indexer_status(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[
+            Indexer(id=1, name="A", enable=False, privacy="private", tags=[]),
+            Indexer(id=2, name="B", enable=True, privacy="private", tags=[]),
+            Indexer(id=3, name="C", enable=True, privacy="private", tags=[]),
+        ],
+        statuses={3: "2025-01-01T12:00:00Z"},
+    )
+
+    response = client.get("/sync")
+
+    assert response.text.count("● ok") == 1
+    assert response.text.count("● disabled") == 1
+    assert "until 2025-01-01 12:00 UTC" in response.text
+    assert response.text.count("● failing") == 1
+
+
+def test_get_sync_still_renders_when_status_call_fails(tmp_path):
+    client = _client(
+        tmp_path,
+        indexers=[Indexer(id=2, name="B", enable=True, privacy="private", tags=[])],
+    )
+
+    response = client.get("/sync")
+
+    assert response.status_code == 200
+    assert "Confirm and apply" in response.text
+    assert "● ok" not in response.text

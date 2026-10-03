@@ -53,5 +53,15 @@ class ProwlarrClient:
         response.raise_for_status()
         return [Tag(id=item["id"], label=item["label"]) for item in response.json()]
 
+    def get_indexer_statuses(self) -> dict[int, str]:
+        """Indexers Prowlarr has temporarily disabled after failures: id -> disabledTill."""
+        response = self._client.get("/api/v1/indexerstatus")
+        response.raise_for_status()
+        return {
+            item["indexerId"]: item["disabledTill"]
+            for item in response.json()
+            if item.get("disabledTill")
+        }
+
     def close(self) -> None:
         self._client.close()
