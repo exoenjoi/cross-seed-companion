@@ -125,6 +125,66 @@ way to do that). After a sync, it shows a manual-restart reminder and, if you se
 `DOCKER_MANAGER_URL`, a direct link to your own Docker management UI (Portainer,
 Dockge, etc.).
 
+### Inside the app
+
+One FastAPI process, one router per page, and every piece of I/O isolated in
+its own small module. Pages are rendered server-side with Jinja2 templates;
+htmx swaps HTML fragments, and the live log view is a Server-Sent Events stream.
+
+```mermaid
+flowchart LR
+    subgraph sync["/sync"]
+        r_sync["routers/sync.py"]
+        sync_service["sync_service.py<br/>diff preview, apply"]
+        indexer_sync["indexer_sync.py<br/>filter indexers,<br/>build torznab URLs"]
+        prowlarr_py["prowlarr.py<br/>API client"]
+        cs_config["crossseed_config.py<br/>read, back up, rewrite<br/>the torznab block"]
+        r_sync --> sync_service
+        sync_service --> indexer_sync
+        sync_service --> prowlarr_py
+        sync_service --> cs_config
+    end
+
+    subgraph act["/actions"]
+        r_actions["routers/actions.py"]
+        yaml_builtin[/"actions_builtin.yaml<br/>shipped in the image"/]
+        yaml_custom[/"custom actions YAML<br/>ACTIONS_CONFIG_PATH, optional"/]
+        actions["actions.py<br/>load and validate the YAML,<br/>substitute whitelisted variables"]
+        runner["action_runner.py<br/>one HTTP call per action, ping"]
+        yaml_builtin --> actions
+        yaml_custom --> actions
+        r_actions --> actions --> runner
+    end
+
+    subgraph logs["/logs and /added"]
+        r_logs["routers/logs.py"]
+        r_added["routers/added.py"]
+        tailer["log_tailer.py<br/>follow the current log"]
+        history["log_history.py<br/>rotated logs, per-file cache"]
+        events["crossseed_events.py<br/>find injections, group copies,<br/>counters"]
+        r_logs -->|"SSE"| tailer
+        r_logs --> history
+        r_added --> history
+        r_added --> events
+    end
+
+    prowlarr([Prowlarr API])
+    config_js[("config.js")]
+    cs_api([cross-seed API])
+    logs_dir[("logs/")]
+
+    prowlarr_py --> prowlarr
+    cs_config --> config_js
+    runner --> cs_api
+    tailer --> logs_dir
+    history --> logs_dir
+```
+
+The actions page is driven entirely by YAML: `actions.py` loads the built-in
+file plus your optional custom one (same schema), and `action_runner.py` turns
+the selected action into a single HTTP request. Adding an action means adding
+a YAML entry, not code.
+
 ## Quickstart
 
 Prerequisites: a running [cross-seed](https://www.cross-seed.org/) on the
