@@ -7,9 +7,8 @@
 
 A self-hosted web companion for [cross-seed](https://www.cross-seed.org/) — the tool has no UI of its own; CSC gives it one.
 
-> **This project is openly AI-assisted ("vibe coded"), and that's disclosed on purpose.**
-> The self-hosted/open-source community is right to be skeptical of AI-generated
-> software, especially around security — so the design deliberately avoids anything
+> **This project is openly AI-assisted.**
+> AI-generated software brings concerns, especially around security — so the design deliberately avoids anything
 > with a large attack surface: **no SSH, no Docker socket access, no shell/subprocess
 > execution from user config**, anywhere in the codebase. See [Security](#security)
 > and [Architecture](#architecture) below.
